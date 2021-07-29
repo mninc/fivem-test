@@ -1,0 +1,129 @@
+<body>
+
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <style>
+            .inventory {
+                background-color: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                width: 80vw;
+                height: 80vh;
+                display: none;
+            }
+
+            body {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .inventory-left,
+            .inventory-right {
+                width: 40%;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+                align-content: flex-start;
+            }
+
+            .inventory-mid {
+                width: 20%;
+            }
+
+            .item {
+                background-color: rgba(255, 255, 255, 0.4);
+                border-radius: 10px;
+                margin: 20px;
+                width: 100px;
+                height: 100px;
+                background-size: contain;
+                background-repeat: no-repeat;
+            }
+
+            .equip-item {
+                display: none;
+                position: absolute;
+                margin: 0 auto;
+                bottom: 40px;
+                width: 100px;
+                height: 100px;
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-color: rgba(255, 255, 255, 0.4);
+                border-radius: 10px;
+            }
+        </style>
+        <script>
+            window.addEventListener('message', (event) => {
+                let data = event.data;
+                if (data.action == 'enable_inventory') {
+                    $('.inventory').css("display", "flex");
+                    const left = $('.inventory-left');
+                    left.empty();
+                    data.inventory.items.forEach(stack => {
+                        let div = $(`<div class="item">`);
+                        if (stack.length) {
+                            div.css("background-image", `url("${stack[0].icon}")`);
+                            div.text(`x${stack.length}`);
+                            if (stack[0].type === "weapon") {
+                                    div.click(() => {
+                                        $('.inventory').css("display", "none");
+                                        fetch(`https://${GetParentResourceName()}/equipWeapon`, {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json; charset=UTF-8',
+                                            },
+                                            body: JSON.stringify({
+                                                weapon_hash: stack[0].weapon_hash,
+                                                ammo: stack[0].ammo,
+                                                icon: stack[0].icon
+                                            })
+                                        }).then(resp => resp.json()).then(resp => console.log(resp));
+                                    })
+                                }
+                        }
+                        left.append(div);
+                    });
+                    const right = $('.inventory-right');
+                    right.empty();
+                    if (data.container) {
+                        data.container.items.forEach(stack => {
+                            let div = $(`<div class="item">`);
+                            if (stack.length) {
+                                console.log(stack)
+                                div.css("background-image", `url("stack[0].icon")`);
+                                div.text(`x${stack.length}`);
+                            }
+                            right.append(div);
+                        });
+                    }
+                } else if (data.action === 'equip_item') {
+                    let equipItem = $('.equip-item');
+                    equipItem.css("background-image", `url("${data.icon}")`);
+                    equipItem.css("display", "block");
+                    setTimeout(() => {
+                        equipItem.css("display", "none");
+                    }, 1000);
+                }
+            });
+
+            document.addEventListener('keydown', e => {
+                if (e.code === "KeyE") {
+                    $('.inventory').css("display", "none");
+                    fetch(`https://${GetParentResourceName()}/nuiFocusOff`, {
+                        method: 'POST'
+                    });
+                }
+            });
+        </script>
+    </head>
+
+    <body>
+        <div class="inventory">
+            <div class="inventory-left"></div>
+            <div class="inventory-mid"></div>
+            <div class="inventory-right"></div>
+        </div>
+        <div class="equip-item">Equipped</div>
+    </body>
+</body>

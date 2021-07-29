@@ -1,0 +1,8 @@
+{
+    "name": "manic-fivem-db",
+    "version": "0.1.0",
+    "dependencies": {
+        "mongoose": "^5.9.0"
+    }
+  }
+  
