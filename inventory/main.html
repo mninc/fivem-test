@@ -2,6 +2,8 @@
 
     <head>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
         <style>
             .inventory {
                 background-color: rgba(255, 255, 255, 0.1);
@@ -57,44 +59,74 @@
             window.addEventListener('message', (event) => {
                 let data = event.data;
                 if (data.action == 'enable_inventory') {
+                    function processItem(stack, index, container, parent) {
+                        let div = $(`<div class="item">`);
+                        div.data("stack", stack);
+                        div.data("container", container);
+                        div.droppable({
+                            drop: function (event, ui) {
+                                const otherStack = ui.draggable.data("stack");
+                                const ids = otherStack.map(item => item._id);
+
+                                $('.inventory').css("display", "none");
+                                fetch(`https://${GetParentResourceName()}/setSlot`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json; charset=UTF-8',
+                                    },
+                                    body: JSON.stringify({
+                                        container,
+                                        slot: index,
+                                        stack: ids,
+                                    })
+                                }).then(resp => resp.json()).then(resp => console.log(resp));
+                                fetch(`https://${GetParentResourceName()}/setSlot`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json; charset=UTF-8',
+                                    },
+                                    body: JSON.stringify({
+                                        container: ui.draggable.data("container"),
+                                        slot: ui.draggable.index(),
+                                        stack: stack.map(item => item._id),
+                                    })
+                                }).then(resp => resp.json()).then(resp => console.log(resp));
+                            }
+                        });
+                        if (stack.length) {
+                            div.draggable();
+                            div.css("background-image", `url("${stack[0].icon}")`);
+                            div.text(`x${stack.length}`);
+                            if (stack[0].type === "weapon" && container === "user") {
+                                div.click(() => {
+                                    $('.inventory').css("display", "none");
+                                    fetch(`https://${GetParentResourceName()}/equipWeapon`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json; charset=UTF-8',
+                                        },
+                                        body: JSON.stringify({
+                                            weapon_hash: stack[0].weapon_hash,
+                                            ammo: stack[0].ammo,
+                                            icon: stack[0].icon
+                                        })
+                                    }).then(resp => resp.json()).then(resp => console.log(resp));
+                                })
+                            }
+                        }
+                        parent.append(div);
+                    }
                     $('.inventory').css("display", "flex");
                     const left = $('.inventory-left');
                     left.empty();
-                    data.inventory.items.forEach(stack => {
-                        let div = $(`<div class="item">`);
-                        if (stack.length) {
-                            div.css("background-image", `url("${stack[0].icon}")`);
-                            div.text(`x${stack.length}`);
-                            if (stack[0].type === "weapon") {
-                                    div.click(() => {
-                                        $('.inventory').css("display", "none");
-                                        fetch(`https://${GetParentResourceName()}/equipWeapon`, {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json; charset=UTF-8',
-                                            },
-                                            body: JSON.stringify({
-                                                weapon_hash: stack[0].weapon_hash,
-                                                ammo: stack[0].ammo,
-                                                icon: stack[0].icon
-                                            })
-                                        }).then(resp => resp.json()).then(resp => console.log(resp));
-                                    })
-                                }
-                        }
-                        left.append(div);
+                    data.inventory.items.forEach((stack, index) => {
+                        processItem(stack, index, "user", left);
                     });
                     const right = $('.inventory-right');
                     right.empty();
                     if (data.container) {
-                        data.container.items.forEach(stack => {
-                            let div = $(`<div class="item">`);
-                            if (stack.length) {
-                                console.log(stack)
-                                div.css("background-image", `url("stack[0].icon")`);
-                                div.text(`x${stack.length}`);
-                            }
-                            right.append(div);
+                        data.container.items.forEach((stack, index) => {
+                            processItem(stack, index, data.container.identifier, right);
                         });
                     }
                 } else if (data.action === 'equip_item') {

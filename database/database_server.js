@@ -12,7 +12,7 @@ mongoose.connect(`mongodb://127.0.0.1:27017/manic-fivem`, {
     useUnifiedTopology: true
 }, (err) => {
     if (err) {
-        Bot.error('Mongoose startup error: ' + err);
+        console.error('Mongoose startup error: ' + err);
         setTimeout(() => {
             process.exit(0);
         }, 1000 * 20);
@@ -31,10 +31,6 @@ function getSteamid(NetID) {
     }
 }
 
-RegisterCommand("guid2", async (source, args, raw) => {
-    console.log(getSteamid(source));
-}, false);
-
 onNet("database:loadInventory", async (source, returnParam, containerID) => {
     const steamid = getSteamid(source);
     let inventory = await database.findOne(database.models.Container, { type: "inventory", identifier: steamid });
@@ -44,11 +40,17 @@ onNet("database:loadInventory", async (source, returnParam, containerID) => {
         database.save(inventory);
     }
     inventory = inventory.toJSON();
-    let container = containerID && await database.findOne(database.models.Container, { indentifier: containerID });
     let itemIDs = [].concat(...inventory.items);
-    if (container) {
+    let container;
+    if (containerID) {
+        container = await database.findOne(database.models.Container, { identifier: containerID });
+        if (!container) {
+            container = new database.models.Container({ type: containerID.split("-")[0], identifier: containerID });
+            container.setItems();
+            database.save(container);
+        }
         itemIDs = itemIDs.concat(...container.items);
-        container = conatiner.toJSON();
+        container = container.toJSON();
     }
     let items = await database.find(database.models.Item, {_id: { $in: itemIDs }}, null, { lean: true });
     items = items.map(item => {
@@ -57,3 +59,13 @@ onNet("database:loadInventory", async (source, returnParam, containerID) => {
     });
     emitNet("inventory:inventoryContents", source, returnParam, inventory, container, items);
 });
+
+onNet("database:setSlot", async (container, slot, stack) => {
+    console.log("setting stack");
+    if (typeof container == "number") container = getSteamid(container);
+
+    const $set = {};
+    $set[`items.${slot}`] = stack;
+    database.findOneAndUpdate(database.models.Container, { identifier: container }, { $set });
+    console.log({ identifier: container }, { $set });
+})

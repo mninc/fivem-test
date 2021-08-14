@@ -1,10 +1,10 @@
 RegisterKeyMapping('inventory', 'Inventory', 'keyboard', 'e');
 RegisterCommand('inventory', async () => {
-  emitNet('database:loadInventory', GetPlayerServerId(PlayerId()), { action: "show_inventory" }, null); // identifier
+  emitNet('database:loadInventory', GetPlayerServerId(PlayerId()), { action: "show_inventory" }, getBin());
 });
 
 onNet('inventory:inventoryContents', async (data, inventory, container, items) => {
-  console.log(data);
+  //console.log(data);
   let itemMap = {};
   items.forEach(item => itemMap[item._id] = item);
 
@@ -29,7 +29,7 @@ onNet('inventory:inventoryContents', async (data, inventory, container, items) =
     if (!item || item.type !== "weapon") return;
     await equipWeapon(item.weapon_hash, item.ammo, item.icon);
   }
-  
+
 });
 
 RegisterNuiCallbackType('nuiFocusOff')
@@ -55,7 +55,7 @@ async function equipWeapon(hash, ammo, icon) {
   } else {
     SetCurrentPedWeapon(ped, "weapon_unarmed", false);
     await wait(1000);
-    RemoveAllPedWeapons(ped);
+    RemoveWeaponFromPed(ped, currentWeapon);
   }
 }
 
@@ -65,7 +65,7 @@ on('__cfx_nui:equipWeapon', async (data, cb) => {
     false, false
   );
   await equipWeapon(data.weapon_hash, data.ammo, data.icon);
-  
+
   cb();
 });
 
@@ -80,3 +80,55 @@ RegisterKeyMapping('invuse 2', 'Inventory Slot 2', 'keyboard', '2');
 RegisterKeyMapping('invuse 3', 'Inventory Slot 3', 'keyboard', '3');
 RegisterKeyMapping('invuse 4', 'Inventory Slot 4', 'keyboard', '4');
 
+RegisterNuiCallbackType('setSlot')
+on('__cfx_nui:setSlot', async (data, cb) => {
+  SetNuiFocus(
+    false, false
+  );
+
+  console.log("setting slot, duh");
+
+  emitNet('database:setSlot', data.container === "user" ? GetPlayerServerId(PlayerId()) : data.container, data.slot, data.stack);
+
+  cb();
+});
+
+const dumpsterModels = ["prop_cs_dumpster_01a", "p_dumpster_t", "prop_dumpster_3a", "prop_dumpster_4b", "prop_dumpster_4a", "prop_dumpster_01a", "prop_dumpster_02b", "prop_dumpster_02a", "prop_snow_dumpster_01"];
+const dumpsterHashes = dumpsterModels.map(model => GetHashKey(model));
+
+function getBin() {
+  const pC = GetEntityCoords(PlayerPedId(), false);
+  const closestEntity = {
+    entity: null,
+    distance: Number.MAX_SAFE_INTEGER,
+  };
+  function processEntity(entity) {
+    const type = GetEntityType(entity);
+    if (type === 0 || type === 1) return; // no 'no object' or peds. need to add vehicle
+    const eC = GetEntityCoords(entity);
+    const distance = Math.hypot(pC[0] - eC[0], pC[1] - eC[1], pC[2] - eC[2]);
+    if (distance < 5 && distance < closestEntity.distance) {
+      const hash = GetEntityModel(entity);
+      if (dumpsterHashes.includes(hash)) {
+        closestEntity.entity = entity;
+        closestEntity.distance = distance;
+      }
+    }
+  }
+  const firstObject = FindFirstObject();
+  processEntity(firstObject[1]);
+  let nextObject = FindNextObject(firstObject[0]);
+  while (nextObject[0]) {
+    processEntity(nextObject[1]);
+    nextObject = FindNextObject(firstObject[0]);
+  }
+  EndFindObject(firstObject[0]);
+  if (!closestEntity.entity) return;
+
+  //const type = GetEntityType(closestEntity.entity);
+  const eC = GetEntityCoords(closestEntity.entity);
+  console.log(`dumpster-${Math.round(eC[0])}-${Math.round(eC[1])}-${Math.round(eC[2])}`);
+  return `dumpster-${Math.round(eC[0])}-${Math.round(eC[1])}-${Math.round(eC[2])}`;
+  // not the best system. improvements coule be made:
+  // get coords when it first loads in (always spawns in unmoved?), a check for a saved dumpster within a few units around instead of just rounding
+}

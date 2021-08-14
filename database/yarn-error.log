@@ -1,0 +1,32 @@
+Arguments: 
+  C:\Users\Jack\Documents\fivemserver_artifact\FXServer.exe C:\Users\Jack\Documents\txData\CFXDefault_FD80A7.base\resources\[system]\[builders]\yarn\yarn_cli.js install --ignore-scripts --cache-folder C:\Users\Jack\Documents\txData\CFXDefault_FD80A7.base\cache\yarn-cache --mutex file:C:\Users\Jack\Documents\txData\CFXDefault_FD80A7.base\cache\yarn-mutex
+
+PATH: 
+  C:\Python39\Scripts\;C:\Python39\;C:\Program Files (x86)\Common Files\Intel\Shared Libraries\redist\intel64\compiler;C:\Python38\Scripts\;C:\Python38\;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Program Files (x86)\Python36-32\Scripts\;C:\Program Files (x86)\Python36-32\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\PuTTY\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\bin\git.exe;C:\Program Files\Git\cmd;C:\Program Files\nodejs\;C:\Ruby27-x64\bin;C:\Users\Jack\.windows-build-tools\python27\;C:\Users\Jack\AppData\Roaming\npm\node_modules\npm\node_modules\npm-lifecycle\node-gyp-bin;C:\Users\Jack\AppData\Roaming\npm\node_modules\windows-build-tools\node_modules\.bin;C:\Users\Jack\AppData\Roaming\npm\node_modules\.bin;C:\Python38\Scripts\;C:\Python38\;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Program Files (x86)\Python36-32\Scripts\;C:\Program Files (x86)\Python36-32\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\PuTTY\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\windows\system32;C:\windows;C:\windows\System32\Wbem;C:\windows\System32\WindowsPowerShell\v1.0\;C:\windows\System32\OpenSSH\;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\Users\Jack\AppData\Local\Programs\Python\Python37-32\Scripts\;C:\Users\Jack\AppData\Local\Programs\Python\Python37-32\;C:\Users\Jack\AppData\Local\Microsoft\WindowsApps;C:\Users\Jack\AppData\Local\GitHubDesktop\bin;C:\Program Files\JetBrains\PhpStorm 2019.2\bin;C:\Users\Jack\Documents\ngrok-stable-windows-amd64;C:\Users\Jack\AppData\Local\Microsoft\WindowsApps;C:\Program Files (x86)\Nmap;C:\Users\Jack\AppData\Roaming\npm;C:\Users\Jack\AppData\Local\Programs\Microsoft VS Code\bin
+
+Yarn version: 
+  1.22.5
+
+Node version: 
+  12.13.0
+
+Platform: 
+  win32 x64
+
+Trace: 
+  Error: EPERM: operation not permitted, rmdir 'C:\Users\Jack\Documents\txData\CFXDefault_FD80A7.base\resources\[local]\database\node_modules\optional-require\dist'
+
+npm manifest: 
+  {
+      "name": "manic-fivem-db",
+      "version": "0.1.0",
+      "dependencies": {
+          "mongoose": "^5.9.0"
+      }
+    }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

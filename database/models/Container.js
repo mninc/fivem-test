@@ -2,11 +2,11 @@ const mongoose = require('mongoose');
 
 const containerSizes = {
     inventory: 10,
-    dustbin: 10
+    dumpster: 10
 }
 
 const schema = new mongoose.Schema({
-    type: { type: String, enum: [ "inventory", "dustbin" ] },
+    type: { type: String, enum: [ "inventory", "dumpster" ] },
     identifier: String, // eg steamid
     name: String,
     description: String,

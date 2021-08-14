@@ -8,3 +8,5 @@ version '1.0.0'
 client_script 'inventory_client.js'
 ui_page 'main.html'
 file 'main.html'
+
+server_script 'inventory_server.js'
