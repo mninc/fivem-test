@@ -9,3 +9,5 @@ client_script 'main_client.js'
 
 loadscreen 'load.html'
 file 'load.html'
+
+file 'minimap.gfx'

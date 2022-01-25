@@ -1,6 +1,32 @@
-RegisterKeyMapping('inventory', 'Inventory', 'keyboard', 'e');
+RegisterKeyMapping('inventory', 'Inventory', 'keyboard', 'h');
+let inventoryOpen = false;
 RegisterCommand('inventory', async () => {
-  emitNet('database:loadInventory', GetPlayerServerId(PlayerId()), { action: "show_inventory" }, getBin());
+  if (inventoryOpen) {
+    inventoryOpen = false;
+    SetNuiFocus(
+      false, false
+    );
+    SendNuiMessage(JSON.stringify({ action: "disable_inventory" }));
+  } else {
+    inventoryOpen = true;
+    emitNet('database:loadInventory', GetPlayerServerId(PlayerId()), { action: "show_inventory" }, getBin());
+  }
+});
+
+setTick(() => {
+  if (inventoryOpen) {
+    DisableControlAction(0, 24, true);
+    DisableControlAction(0, 25, true);
+    DisableControlAction(0, 257, true);
+  }
+});
+
+on('onResourceStart', resource => {
+  if (resource !== "inventory") return;
+  SetNuiFocusKeepInput(true);
+  SetWeaponsNoAutoswap(true);
+  const ped = PlayerPedId();
+  RemoveAllPedWeapons(ped);
 });
 
 onNet('inventory:inventoryContents', async (data, inventory, container, items) => {
@@ -20,16 +46,17 @@ onNet('inventory:inventoryContents', async (data, inventory, container, items) =
   if (container) mapItems(container.items);
 
   if (data.action === "show_inventory") {
+    inventoryOpen = true;
     SetNuiFocus(
       true, true
     );
     SendNuiMessage(JSON.stringify({ action: "enable_inventory", inventory, container }));
   } else if (data.action === "equip_slot") {
     const item = inventory.items[data.slot - 1][0];
+    console.log(item);
     if (!item || item.type !== "weapon") return;
-    await equipWeapon(item.weapon_hash, item.ammo, item.icon);
+    await equipWeapon(item.weapon_hash, item.ammo, item.icon, item._id);
   }
-
 });
 
 RegisterNuiCallbackType('nuiFocusOff')
@@ -46,16 +73,31 @@ function wait(time) {
   });
 }
 
-async function equipWeapon(hash, ammo, icon) {
+
+let itemEquipped = false, currentAmmo, ammoCheckInterval;
+async function equipWeapon(hash, ammo, icon, mongoID) {
   const ped = PlayerPedId();
   const currentWeapon = GetCurrentPedWeapon(ped)[1];
-  if (currentWeapon === GetHashKey("weapon_unarmed")) {
+  if (!itemEquipped) {
+    RemoveAllPedWeapons(ped);
     GiveWeaponToPed(ped, hash, ammo, false, true);
+    currentAmmo = ammo;
     SendNuiMessage(JSON.stringify({ action: "equip_item", icon }));
+    itemEquipped = hash;
+    ammoCheckInterval = setInterval(() => {
+      let newAmmo = GetAmmoInPedWeapon(ped, hash);
+      if (newAmmo !== currentAmmo) {
+        currentAmmo = newAmmo;
+        emitNet('database:setWeaponAmmo', GetPlayerServerId(PlayerId()), mongoID, newAmmo);
+      }
+    }, 2000);
   } else {
-    SetCurrentPedWeapon(ped, "weapon_unarmed", false);
-    await wait(1000);
-    RemoveWeaponFromPed(ped, currentWeapon);
+    
+    //SetPedAmmo(ped, itemEquipped, 0);
+    GiveWeaponToPed(ped, "weapon_unarmed", 0, false, true);
+    itemEquipped = false;
+    clearInterval(ammoCheckInterval);
+    currentAmmo = undefined;
   }
 }
 
@@ -64,7 +106,7 @@ on('__cfx_nui:equipWeapon', async (data, cb) => {
   SetNuiFocus(
     false, false
   );
-  await equipWeapon(data.weapon_hash, data.ammo, data.icon);
+  await equipWeapon(data.weapon_hash, data.ammo, data.icon, data._id);
 
   cb();
 });

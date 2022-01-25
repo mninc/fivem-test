@@ -7,7 +7,7 @@ const containerSizes = {
 
 const schema = new mongoose.Schema({
     type: { type: String, enum: [ "inventory", "dumpster" ] },
-    identifier: String, // eg steamid
+    identifier: String, // eg character _id
     name: String,
     description: String,
     items: [ [ String ] ], // 2d array of _ids

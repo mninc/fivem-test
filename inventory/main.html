@@ -58,7 +58,9 @@
         <script>
             window.addEventListener('message', (event) => {
                 let data = event.data;
-                if (data.action == 'enable_inventory') {
+                if (data.action === "disable_inventory") {
+                    $('.inventory').css("display", "none");
+                } else if (data.action == 'enable_inventory') {
                     function processItem(stack, index, container, parent) {
                         let div = $(`<div class="item">`);
                         div.data("stack", stack);
@@ -108,7 +110,8 @@
                                         body: JSON.stringify({
                                             weapon_hash: stack[0].weapon_hash,
                                             ammo: stack[0].ammo,
-                                            icon: stack[0].icon
+                                            icon: stack[0].icon,
+                                            _id: stack[0]._id
                                         })
                                     }).then(resp => resp.json()).then(resp => console.log(resp));
                                 })
@@ -136,15 +139,6 @@
                     setTimeout(() => {
                         equipItem.css("display", "none");
                     }, 1000);
-                }
-            });
-
-            document.addEventListener('keydown', e => {
-                if (e.code === "KeyE") {
-                    $('.inventory').css("display", "none");
-                    fetch(`https://${GetParentResourceName()}/nuiFocusOff`, {
-                        method: 'POST'
-                    });
                 }
             });
         </script>

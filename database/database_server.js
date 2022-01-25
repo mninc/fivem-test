@@ -3,6 +3,15 @@ const mongoose = require("mongoose");
 
 const database = require('./database');
 
+function docToJSON(doc) {
+    doc = doc.toJSON();
+    doc._id = doc._id.toString();
+    return doc;
+}
+function docsToJSON(docs) {
+    return docs.map(docToJSON);
+}
+
 mongoose.connect(`mongodb://127.0.0.1:27017/manic-fivem`, {
     authSource: 'admin',
     user: process.env.DB_USER,
@@ -68,4 +77,30 @@ onNet("database:setSlot", async (container, slot, stack) => {
     $set[`items.${slot}`] = stack;
     database.findOneAndUpdate(database.models.Container, { identifier: container }, { $set });
     console.log({ identifier: container }, { $set });
-})
+});
+
+onNet("database:setWeaponAmmo", async (source, mongoID, newAmmo) => {
+    database.findByIdAndUpdate(database.models.Item, mongoID, { $set: { ammo: newAmmo } });
+});
+
+onNet("database:getCharacters", async (source) => {
+    const steamid = getSteamid(source);
+    const characters = await database.find(database.models.Character, { steamid });
+    emitNet("character_selector:characters", source, docsToJSON(characters));
+});
+
+onNet("database:createCharacter", async(source, characterData) => {
+    const character = new database.models.Character({
+        steamid: getSteamid(source),
+        ped: characterData.ped,
+        name: characterData.name,
+        health: 200
+    });
+    await character.save();
+    emitNet("character_selector:finishedCreatingCharacter", source);
+});
+
+onNet("database:deleteCharacter", async(source, character) => {
+    await database.deleteOne(database.models.Character, {_id: character.character});
+    emitNet("character_selector:deletedCharacter", source);
+});

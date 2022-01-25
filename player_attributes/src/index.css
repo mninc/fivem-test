@@ -1,0 +1,19 @@
+#wheels {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    display: flex;
+}
+#wheels div {
+    font-size: 30px;
+}
+
+#ammo {
+    position: absolute;
+    right: 0;
+}
+#ammo p {
+    color: white;
+    font-family: sans-serif;
+    font-size: 30px;
+}
