@@ -9,6 +9,7 @@ RegisterCommand('inventory', async () => {
     SendNuiMessage(JSON.stringify({ action: "disable_inventory" }));
   } else {
     inventoryOpen = true;
+    SetNuiFocusKeepInput(true);
     emitNet('database:loadInventory', GetPlayerServerId(PlayerId()), { action: "show_inventory" }, getBin());
   }
 });
@@ -18,12 +19,21 @@ setTick(() => {
     DisableControlAction(0, 24, true);
     DisableControlAction(0, 25, true);
     DisableControlAction(0, 257, true);
+
+    // looking around
+    DisableControlAction(0, 1, true);
+    DisableControlAction(0, 2, true);
+    DisableControlAction(0, 4, true);
+    DisableControlAction(0, 6, true);
+    DisableControlAction(0, 270, true);
+    DisableControlAction(0, 271, true);
+    DisableControlAction(0, 272, true);
+    DisableControlAction(0, 273, true);
   }
 });
 
 on('onResourceStart', resource => {
   if (resource !== "inventory") return;
-  SetNuiFocusKeepInput(true);
   SetWeaponsNoAutoswap(true);
   const ped = PlayerPedId();
   RemoveAllPedWeapons(ped);
@@ -92,7 +102,7 @@ async function equipWeapon(hash, ammo, icon, mongoID) {
       }
     }, 2000);
   } else {
-    
+
     //SetPedAmmo(ped, itemEquipped, 0);
     GiveWeaponToPed(ped, "weapon_unarmed", 0, false, true);
     itemEquipped = false;
