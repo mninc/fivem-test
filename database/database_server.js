@@ -4,12 +4,7 @@ const mongoose = require("mongoose");
 const database = require('./database');
 
 function docToJSON(doc) {
-    doc = doc.toJSON();
-    doc._id = doc._id.toString();
-    return doc;
-}
-function docsToJSON(docs) {
-    return docs.map(docToJSON);
+    return JSON.parse(JSON.stringify(doc));
 }
 
 mongoose.connect(`mongodb://127.0.0.1:27017/manic-fivem`, {
@@ -61,7 +56,7 @@ onNet("database:loadInventory", async (source, returnParam, containerID) => {
         itemIDs = itemIDs.concat(...container.items);
         container = container.toJSON();
     }
-    let items = await database.find(database.models.Item, {_id: { $in: itemIDs }}, null, { lean: true });
+    let items = await database.find(database.models.Item, { _id: { $in: itemIDs } }, null, { lean: true });
     items = items.map(item => {
         item._id = item._id.toString();
         return item;
@@ -86,21 +81,98 @@ onNet("database:setWeaponAmmo", async (source, mongoID, newAmmo) => {
 onNet("database:getCharacters", async (source) => {
     const steamid = getSteamid(source);
     const characters = await database.find(database.models.Character, { steamid });
-    emitNet("character_selector:characters", source, docsToJSON(characters));
+    emitNet("character_selector:characters", source, docToJSON(characters));
 });
 
-onNet("database:createCharacter", async(source, characterData) => {
+onNet("database:getCharacter", async (source, cid, emitTo) => {
+    emitNet(emitTo, source, docToJSON(await database.findOne(database.models.Character, { cid })));
+});
+
+let nextCharacterID = -1;
+on('onServerResourceStart', async resource => {
+    if (resource !== "database") return;
+    let character = await database.findOne(database.models.Character, {}, null, { sort: { created: -1 } });
+    nextCharacterID = character ? (character.cid + 1) : 1000;
+});
+
+onNet("database:createCharacter", async (source, characterData) => {
     const character = new database.models.Character({
         steamid: getSteamid(source),
         ped: characterData.ped,
         name: characterData.name,
-        health: 200
+        health: 200,
+        created: new Date(),
+        cid: nextCharacterID,
+        cash: 5000,
     });
+    nextCharacterID++;
     await character.save();
     emitNet("character_selector:finishedCreatingCharacter", source);
 });
 
-onNet("database:deleteCharacter", async(source, character) => {
-    await database.deleteOne(database.models.Character, {_id: character.character});
+onNet("database:deleteCharacter", async (source, character) => {
+    await database.deleteOne(database.models.Character, { cid: character.character });
     emitNet("character_selector:deletedCharacter", source);
+});
+
+onNet("database:updateCharacter", async (source, character, updates) => {
+    console.log("update character", character, updates);
+    await database.findOneAndUpdate(database.models.Character, { cid: character }, { $set: updates });
+});
+
+onNet("database:loadAccounts", async (source, cid, emitTo) => {
+    let accounts = await database.find(database.models.BankAccount, { access: cid });
+    if (!accounts.length) {
+        let personalAccount = new database.models.BankAccount({
+            owner: cid,
+            access: [cid],
+            balance: 0,
+            id: parseInt(`60${cid}`),
+            type: "personal"
+        });
+        await personalAccount.save();
+        accounts = [personalAccount];
+    }
+    emitNet(emitTo, source, docToJSON(accounts));
+});
+
+onNet("database:processTransaction", async (source, data, emitTo) => {
+    console.log("process transaction", data);
+    let account = await database.findOne(database.models.BankAccount, { id: data.accountNumber });
+    let character = await database.findOne(database.models.Character, { cid: data.cid });
+    if (!character || !account) return console.log("no account or char", character, account);
+    if (data.transactionType === "deposit") {
+        if (character.cash < data.amount) return console.log("not enough money to deposit");
+        let transaction = new database.models.BankTransaction({
+            accountNumber: data.accountNumber,
+            amount: data.amount,
+            direction: "incoming",
+            transactionType: "deposit",
+            at: new Date()
+        });
+        await database.save(transaction);
+        account.balance += data.amount;
+        await database.save(account);
+    } else if (data.transactionType === "withdraw") {
+        if (account.balance < data.amount) return console.log("not enough money to withdraw");
+        let transaction = new database.models.BankTransaction({
+            accountNumber: data.accountNumber,
+            amount: data.amount,
+            direction: "outgoing",
+            transactionType: "withdraw",
+            at: new Date()
+        });
+        await database.save(transaction);
+        account.balance -= data.amount;
+        await database.save(account);
+    }
+    emitNet(emitTo, source, data);
+});
+
+onNet("database:loadTransactions", async (source, data, emitTo) => {
+    emitNet(
+        emitTo,
+        source,
+        docToJSON(await database.find(database.models.BankTransaction, { accountNumber: data.accountNumber }, null, { sort: { at: -1 }, limit: 20 }))
+    );
 });

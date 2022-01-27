@@ -15,7 +15,7 @@ class CharacterSelection extends React.Component {
         this.state = {
             visible: false,
             mode: "selection",
-            selectedCharacter: "",
+            selectedCharacter: 0,
             showDeleteModal: false,
         };
         this.characterCreation = {
@@ -33,7 +33,7 @@ class CharacterSelection extends React.Component {
         this.setState({
             visible: visibility,
             mode: "selection", // reset mode
-            selectedCharacter: "",
+            selectedCharacter: 0,
             showDeleteModal: false,
         })
     }
@@ -42,7 +42,7 @@ class CharacterSelection extends React.Component {
         this.setState({
             visible: this.state.visible,
             mode,
-            selectedCharacter: "",
+            selectedCharacter: 0,
             showDeleteModal: false,
         })
     }
@@ -121,7 +121,7 @@ class CharacterSelection extends React.Component {
             return (
                 <div id="char-selection">
                     <div className="character-boxes">
-                        {this.characters.slice(0, 5).map(char => <div className="character-box" key={char._id} onClick={() => this.setSelectedCharacter(char._id)} />)}
+                        {this.characters.slice(0, 5).map(char => <div className="character-box" key={char._id} onClick={() => this.setSelectedCharacter(char.cid)} />)}
                     </div>
                     <div className="buttons">
                         <button className={"button-green " + (this.state.selectedCharacter ? "" : "disabled")} onClick={() => this.selectCharacter()}>Select character</button>

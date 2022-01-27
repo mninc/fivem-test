@@ -15,14 +15,32 @@ class StatWheel extends React.Component {
 class PlayerAttributes extends React.Component {
     constructor(props) {
         super(props);
+        this.cashTimeoutHandle;
         this.state = {
             visible: true,
             attributes: {
                 health: -1,
                 clipSize: -1,
-                totalAmmo: -1
-            }
+                totalAmmo: -1,
+                cash: -1,
+            },
+            showCash: false
         }
+    }
+
+    showCash(change) {
+        this.setState({
+            showCash: true,
+            cashChange: change
+        });
+        clearTimeout(this.cashTimeoutHandle);
+        this.cashTimeoutHandle = setTimeout(() => {
+            this.cashTimeoutHandle = null;
+            this.setState({
+                showCash: false,
+                cashChange: 0
+            });
+        }, 2000);
     }
 
 
@@ -33,11 +51,14 @@ class PlayerAttributes extends React.Component {
                 <div id="ammo">
                     {this.state.attributes.clipSize !== -1 ? <p>{this.state.attributes.clipSize}/{this.state.attributes.totalAmmo}</p> : ""}
                 </div>
+                <div id="cash">
+                    {this.state.showCash ? <p>${this.state.attributes.cash}</p> :  ""}
+                    {this.state.showCash && this.state.cashChange ? <p className={"cash-change" + (this.state.cashChange < 0 ? " cash-change-negative" : "")}>{this.state.cashChange < 0 ? "-" : "+"}${Math.abs(this.state.cashChange)}</p> : ""}
+                </div>
                 <div id="wheels">
                     <StatWheel percentage={this.state.attributes.health} color="green" />
                 </div>
             </div>
-
         )
     }
 }
@@ -53,11 +74,9 @@ window.addEventListener('message', (event) => {
     if (data.action === 'visible') {
         attributes.setState({
             visible: data.visible,
-            attributes: {
-                health: data.attributes.health,
-                clipSize: data.attributes.clipSize,
-                totalAmmo: data.attributes.totalAmmo
-            }
+            attributes: data.attributes
         })
+    } else if (data.action === "show_cash") {
+        attributes.showCash(data.change);
     }
 });

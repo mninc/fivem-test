@@ -50,13 +50,11 @@ function deletePeds() {
 let characters;
 onNet('character_selector:characters', async (chars) => {
     characters = chars;
-    console.log(characters);
     deletePeds();
     SetNuiFocus(
         true, true
     );
     SendNuiMessage(JSON.stringify({ action: "enable_screen", characters }));
-
 
     for (let i = 0; i < characters.length && i < characterPositions.length; i++) {
         const character = characters[i];
@@ -67,7 +65,6 @@ onNet('character_selector:characters', async (chars) => {
         spawnedPeds.push(newPed);
         SetModelAsNoLongerNeeded(character.ped);
     }
-
 });
 
 function characterSelector() {
@@ -174,7 +171,8 @@ onNet('character_selector:deletedCharacter', () => {
     characterSelector();
 });
 
-RegisterNuiCallbackType('selectedCharacter')
+let cid;
+RegisterNuiCallbackType('selectedCharacter');
 on('__cfx_nui:selectedCharacter', async (data, cb) => {
     cb();
     inSelection = false;
@@ -184,8 +182,16 @@ on('__cfx_nui:selectedCharacter', async (data, cb) => {
     );
     const player = PlayerId();
     if (!characters) return;
-    let character = characters.find(char => char._id === data.character);
+    let character = characters.find(char => char.cid === data.character);
     if (!character) return;
+    cid = character.cid;
+    console.log(character);
+    emit("core:setAttributes", {
+        cid: character.cid,
+        ped: character.ped,
+        health: character.health,
+        cash: character.cash
+    }, true);
     await getModel(character.ped);
     SetPlayerModel(player, character.ped);
     SetPedDefaultComponentVariation(player);
@@ -197,4 +203,10 @@ on('__cfx_nui:selectedCharacter', async (data, cb) => {
     SetEntityCollision(player, true, true);
     FreezePedCameraRotation(player, false);
     SetEntityHealth(PlayerPedId(), character.health);
+});
+
+on('onResourceStart', resource => {
+    if (resource === "core") {
+        emit("core:cid", cid);
+    }
 });

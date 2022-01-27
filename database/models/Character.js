@@ -5,4 +5,7 @@ module.exports = mongoose.model('Character', {
     ped: String,
     name: String,
     health: Number,
+    created: Date,
+    cid: Number,
+    cash: Number,
 });
