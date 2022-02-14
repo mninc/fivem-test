@@ -69,7 +69,7 @@ onNet('inventory:inventoryContents', async (data, inventory, container, items) =
   }
 });
 
-RegisterNuiCallbackType('nuiFocusOff')
+RegisterNuiCallbackType('nuiFocusOff');
 on('__cfx_nui:nuiFocusOff', (data, cb) => {
   SetNuiFocus(
     false, false

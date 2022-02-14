@@ -53,6 +53,11 @@ RegisterCommand("coords", () => {
     console.log(GetEntityHeading(PlayerPedId()));
 });
 
+RegisterCommand("time", () => {
+    console.log(GetClockHours());
+    console.log(GetClockMinutes());
+});
+
 RegisterCommand("radar", async (source, args) => {
     DisplayRadar(args[0] === "on");
 });

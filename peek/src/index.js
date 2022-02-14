@@ -37,13 +37,6 @@ class Peek extends React.Component {
                         Use ATM
                     </p>
                 )
-            } else if (option === "close") {
-                buttons.push(
-                    <p id={option} onClick={() => this.selectOption(option)}>
-                        <i class="fas fa-times"></i>
-                        Close
-                    </p>
-                )
             }
 
         }

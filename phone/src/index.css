@@ -1,9 +1,257 @@
+body {
+    font-family: sans-serif;
+    overflow: hidden;
+    background-color: unset;
+}
+
+p {
+    margin: 0;
+}
+
 div.phone {
-    background-color: red;
-    padding-top: 50px;
-    color: black;
-    width: 300px;
-    height: 800px;
+    background-color: rgb(54, 54, 54);
+    border-radius: 30px;
+
+    position: absolute;
     right: 0;
-    bottom: 0;
+    margin: 20px;
+    padding: 30px;
+    transition: bottom 500ms;
+}
+
+div.phone-screen {
+    background-color: rgb(106, 106, 179);
+    background-image: url("https://wallpaperaccess.com/full/797185.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    width: 450px;
+    height: 800px;
+    display: flex;
+    flex-direction: column;
+}
+
+div.status-bar {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    color: white;
+    padding: 10px 0 0 0;
+    border-bottom: 2px solid white;
+}
+
+div.status-bar p {
+    margin: 4px;
+    font-weight: bold;
+    font-size: 30px;
+}
+
+div.status-bar div.status-left {
+    display: flex;
+    justify-content: flex-start;
+    margin: 0 5px;
+}
+
+div.status-bar div.status-right {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 5px;
+}
+
+div.navigation {
+    color: white;
+    font-size: 40px;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    padding: 5px 0;
+    border-top: 2px solid white;
+}
+
+div.navigation p {
+    margin: 3px;
+}
+
+div.mid-section {
+    flex-grow: 1;
+}
+
+div.apps {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    align-content: flex-start;
+}
+
+div.apps::after {
+    content: "";
+    flex: auto;
+}
+
+div.app {
+    color: white;
+    font-size: 60px;
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px;
+    box-sizing: content-box;
+    line-height: 1;
+}
+
+div.app:nth-child(1) {
+    background-color: blue;
+}
+
+div.app:nth-child(2) {
+    background-color: gold;
+}
+
+div.app:nth-child(3) {
+    background-color: red;
+}
+
+div.app:nth-child(4) {
+    background-color: blue;
+}
+
+div.app:nth-child(5) {
+    background-color: blue;
+}
+
+div.app:nth-child(6) {
+    background-color: blue;
+}
+
+div.app:nth-child(7) {
+    background-color: blue;
+}
+
+div.contacts div.contacts-upper {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 30px;
+    color: white;
+}
+
+.mid-section.contacts {
+    background-color: rgb(59, 59, 59);
+}
+
+
+.phone-modal {
+    position: fixed;
+    z-index: 2;
+    width: 450px;
+    height: 800px;
+    background-color: rgba(0, 0, 0, 0.349);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.phone-modal-content {
+    background-color: rgb(255, 255, 255);
+    border: 1px solid rgba(0, 0, 0, .125);
+    border-radius: 10px;
+    min-height: 400px;
+    width: 70%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.phone-modal-content input {
+    width: 200px;
+}
+
+.phone-modal-content button {
+    margin: 10px;
+}
+
+.contact {
+    width: calc(100% - 30px);
+    /*background-color: rgb(136, 136, 136);
+    border: 1px solid black;*/
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.contact .contact-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.contact .contact-right {
+    display: flex;
+    align-items: center;
+}
+
+.contact .contact-right p {
+    margin: 0 5px;
+}
+
+.contact p {
+    color: white;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.sms-thread {
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+}
+
+.sms-thread-upper {
+    background-color: rgb(95, 95, 95);
+}
+.sms-thread-upper > p  {
+    padding: 5px;
+    color: white;
+    font-size: 20px;
+}
+
+.sms-thread-main {
+    flex-grow: 1;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.sms-message {
+    margin: 10px;
+    width: calc(100% - 20px);
+    padding: 10px;
+    border-radius: 10px;
+}
+.sms-message.from-them {
+    background-color: rgb(95, 95, 95);
+    border-bottom-left-radius: 0;
+}
+.sms-message.from-us {
+    background-color: rgb(78, 78, 255);
+    border-bottom-right-radius: 0;
+}
+
+.sms {
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+}
+.sms .sms-thread-overview {
+    width: 100%;
+    padding: 20px;
+    background-color: white;
+}
+.sms-thread-overview p {
+    font-size: 20px;
+}
+
+.tooltip {
+    font-size: 25px;
 }

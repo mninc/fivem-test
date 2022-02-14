@@ -1,5 +1,6 @@
 let inSelection = false;
 let id = 1;
+let ready = false;
 setTick(() => {
     if (inSelection) SetPlayerInvisibleLocally(PlayerId());
 });
@@ -51,10 +52,6 @@ let characters;
 onNet('character_selector:characters', async (chars) => {
     characters = chars;
     deletePeds();
-    SetNuiFocus(
-        true, true
-    );
-    SendNuiMessage(JSON.stringify({ action: "enable_screen", characters }));
 
     for (let i = 0; i < characters.length && i < characterPositions.length; i++) {
         const character = characters[i];
@@ -65,6 +62,15 @@ onNet('character_selector:characters', async (chars) => {
         spawnedPeds.push(newPed);
         SetModelAsNoLongerNeeded(character.ped);
     }
+
+    while (!ready) {
+        await Delay(10);
+    }
+    SendNuiMessage(JSON.stringify({ action: "enable_screen", characters }));
+    ShutdownLoadingScreenNui();
+    SetNuiFocus(
+        true, true
+    );
 });
 
 function characterSelector() {
@@ -72,13 +78,13 @@ function characterSelector() {
     exports.spawnmanager.spawnPlayer({
         x: -2193.1298828125,
         y: 3297.818603515625,
-        z: 32.81256103515625,
+        z: 31.81256103515625,
         model: 'a_m_m_bevhills_01'
-    }, () => {
+    }, async () => {
+        const player = PlayerPedId();
         inSelection = true;
         SetPlayerControl(PlayerId(), false);
         DisableIdleCamera(true);
-        const player = PlayerPedId();
         FreezeEntityPosition(player, true);
         SetEntityInvincible(player, true);
         SetEntityCollision(player, false, false);
@@ -87,9 +93,7 @@ function characterSelector() {
 
 on('onClientGameTypeStart', () => {
     exports.spawnmanager.setAutoSpawnCallback(characterSelector);
-
-    exports.spawnmanager.setAutoSpawn(true);
-    exports.spawnmanager.forceRespawn();
+    exports.spawnmanager.setAutoSpawn(false);
 });
 
 RegisterCommand("switch", () => {
@@ -143,6 +147,12 @@ on('__cfx_nui:newCharacterPed', async (data, cb) => {
     SetGameplayCamRelativeHeading(180);
 });
 
+RegisterNuiCallbackType('ready');
+on('__cfx_nui:ready', async (data, cb) => {
+    cb();
+    ready = true;
+});
+
 Delay = (ms) => new Promise(res => setTimeout(res, ms));
 
 
@@ -185,13 +195,7 @@ on('__cfx_nui:selectedCharacter', async (data, cb) => {
     let character = characters.find(char => char.cid === data.character);
     if (!character) return;
     cid = character.cid;
-    console.log(character);
-    emit("core:setAttributes", {
-        cid: character.cid,
-        ped: character.ped,
-        health: character.health,
-        cash: character.cash
-    }, true);
+    emit("core:cid", cid);
     await getModel(character.ped);
     SetPlayerModel(player, character.ped);
     SetPedDefaultComponentVariation(player);

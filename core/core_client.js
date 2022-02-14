@@ -41,8 +41,10 @@ onNet("core:characterFromDatabase", character => {
         cid: character.cid,
         health: character.health,
         ped: character.ped,
-        cash: character.cash
+        cash: character.cash,
+        phoneNumber: character.phoneNumber,
     };
+    console.log(characterAttributes);
     loaded = true;
     emit("core:newAttributes", characterAttributes);
 });

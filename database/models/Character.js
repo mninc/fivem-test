@@ -8,4 +8,5 @@ module.exports = mongoose.model('Character', {
     created: Date,
     cid: Number,
     cash: Number,
+    phoneNumber: Number,
 });

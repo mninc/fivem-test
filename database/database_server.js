@@ -104,6 +104,7 @@ onNet("database:createCharacter", async (source, characterData) => {
         created: new Date(),
         cid: nextCharacterID,
         cash: 5000,
+        phoneNumber: parseInt(`415555${nextCharacterID}`),
     });
     nextCharacterID++;
     await character.save();
@@ -174,5 +175,127 @@ onNet("database:loadTransactions", async (source, data, emitTo) => {
         emitTo,
         source,
         docToJSON(await database.find(database.models.BankTransaction, { accountNumber: data.accountNumber }, null, { sort: { at: -1 }, limit: 20 }))
+    );
+});
+
+onNet("database:addContact", async (source, data, emitTo) => {
+    console.log(data);
+    await database.findOneAndUpdate(
+        database.models.Contact,
+        {
+            phoneBook: data.phoneNumber,
+            phoneNumber: data.contactNumber
+        },
+        {
+            $set: { name: data.contactName }
+        },
+        {
+            upsert: true
+        }
+    );
+    emitNet(
+        emitTo,
+        source
+    );
+});
+
+onNet("database:removeContact", async (source, data, emitTo) => {
+    await database.deleteOne(
+        database.models.Contact,
+        {
+            phoneBook: data.phoneNumber,
+            phoneNumber: data.contactNumber
+        }
+    );
+    emitNet(
+        emitTo,
+        source
+    );
+});
+
+onNet("database:smsThreadOverview", async (source, data, emitTo) => {
+    console.log("overview", data);
+    //let incoming = docToJSON(await database.models.TextMessage.find({ to: data.phoneNumber }).sort({ at: -1 }).distinct("from"));
+    let incoming = await database.models.TextMessage.aggregate([
+        // each Object is an aggregation.
+        {
+            $match: {
+                $or: [
+                    { from: data.phoneNumber },
+                    { to: data.phoneNumber }
+                ]
+            }
+        }, {
+            $sort: {
+                at: -1
+            }
+        }, {
+            $group: {
+                _id: { $cond: { if: { "$eq": ["$from", data.phoneNumber] }, then: "$to", else: "$from" } },
+                mostRecentMessage: { $first: "$content" }
+            }
+        }, {
+            $project: {
+                _id: 0,
+                number: "$_id",
+                mostRecentMessage: "$mostRecentMessage"
+            }
+        }
+    ])
+    console.log(incoming);
+    /*let outgoing = docToJSON(await database.models.TextMessage.find({ from: data.phoneNumber }).sort({ at: -1 }).distinct("to"));
+    console.log(outgoing);
+    outgoing.forEach(message => {
+        let matchingIncoming = incoming.find(incomingMessage => incomingMessage.from === message.to);
+        if (matchingIncoming) {
+            if (matchingIncoming.at < message.at) { // outgoing message is more recent
+                matchingIncoming.at = message.at;
+                matchingIncoming.from = message.from;
+                matchingIncoming.to = message.to;
+                matchingIncoming.content = message.content;
+            }
+        } else {
+            incoming.push(message);
+        }
+    });
+    console.log(incoming);*/
+
+    emitNet(
+        emitTo,
+        source,
+        docToJSON(incoming)
+    );
+});
+
+onNet("database:loadContacts", async (source, data, emitTo) => {
+    console.log(data);
+    emitNet(
+        emitTo,
+        source,
+        docToJSON(await database.find(database.models.Contact, { phoneBook: data.phoneNumber }))
+    );
+});
+
+onNet("database:smsMessages", async (source, data, emitTo) => {
+    let d = docToJSON(await database.find(database.models.TextMessage, { $or: [{ from: data.phoneNumber, to: data.contactNumber }, { from: data.contactNumber, to: data.phoneNumber }] }, null, { sort: { at: 1 } }));
+    console.log(d);
+    emitNet(
+        emitTo,
+        source,
+        d
+    );
+});
+
+onNet("database:sendSMS", async (source, data, emitTo) => {
+    await database.save(database.models.TextMessage({
+        from: data.phoneNumber,
+        to: data.contactNumber,
+        at: new Date(),
+        content: data.content
+    }));
+    emitNet(
+        emitTo,
+        source,
+        { number: data.contactNumber }
     );
 });

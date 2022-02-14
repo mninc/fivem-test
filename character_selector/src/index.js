@@ -204,3 +204,6 @@ window.addEventListener('message', (event) => {
         selection.setVisible(data.action === "enable_screen");
     }
 });
+fetch(`https://${GetParentResourceName()}/ready`, {
+    method: 'POST'
+});
