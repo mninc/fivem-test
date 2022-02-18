@@ -1,0 +1,55 @@
+.inventory {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    width: 80vw;
+    height: 80vh;
+    margin: 10vh 10vw;
+    display: flex;
+}
+
+body {
+    background-color: unset;
+}
+
+.inventory-left,
+.inventory-right {
+    width: 40%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-content: flex-start;
+}
+
+.inventory-mid {
+    width: 20%;
+}
+
+.slot {
+    background-color: rgba(255, 255, 255, 0.4);
+    border-radius: 10px;
+    margin: 20px;
+    width: 100px;
+    height: 100px;
+}
+
+.item {
+    width: 100px;
+    height: 100px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-color: rgba(255, 255, 255, 0.4);
+    border-radius: 10px;
+}
+
+.equip-item {
+    display: none;
+    position: absolute;
+    margin: 0 auto;
+    bottom: 40px;
+    width: 100px;
+    height: 100px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-color: rgba(255, 255, 255, 0.4);
+    border-radius: 10px;
+}

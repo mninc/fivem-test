@@ -69,7 +69,6 @@ onNet("phone:contacts", contacts => {
 
 on("core:newAttributes", newAttributes => {
     characterAttributes = newAttributes;
-    console.log(characterAttributes);
 });
 
 setInterval(sendTime, 2000);

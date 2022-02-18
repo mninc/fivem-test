@@ -1,0 +1,18 @@
+[
+    {
+        "item_id": "weapon_pistol",
+        "icon": "https://wiki.gtanet.work/images/thumb/9/9b/weapon_453432689.png/120px-weapon_453432689.png",
+        "name": "Gun",
+        "description": "Blam",
+        "type": "weapon",
+        "weapon_hash": "weapon_pistol",
+        "stackable": false
+    }, {
+        "item_id": "joint",
+        "icon": "https://us.123rf.com/450wm/sabelskaya/sabelskaya1812/sabelskaya181200054/113631725-vector-weed-joint-cannabis-spliff-hash-smoking-cigarette-sketch-icon-unhealthy-smoking-drug-addicati.jpg?ver=6",
+        "name": "Joint",
+        "description": "Smoke",
+        "type": "consumable",
+        "stackable": true
+    }
+]

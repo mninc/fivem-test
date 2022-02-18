@@ -10,7 +10,7 @@ const schema = new mongoose.Schema({
     identifier: String, // eg character _id
     name: String,
     description: String,
-    items: [ [ String ] ], // 2d array of _ids
+    items: [ [ mongoose.Types.ObjectId ] ], // 2d array of _ids
 });
 schema.methods.setItems = function() {
     this.items = [];

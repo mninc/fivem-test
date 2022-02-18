@@ -37,6 +37,13 @@ class Peek extends React.Component {
                         Use ATM
                     </p>
                 )
+            } else if (option === "bank-robbery:ped") {
+                buttons.push(
+                    <p id={option} onClick={() => this.selectOption(option)}>
+                        <i class="fas fa-piggy-bank"></i>
+                        Get Bank Supplies
+                    </p>
+                )
             }
 
         }

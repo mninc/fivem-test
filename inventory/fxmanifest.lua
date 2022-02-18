@@ -5,8 +5,8 @@ author 'manic'
 description 'inventory'
 version '1.0.0'
 
-client_script 'inventory_client.js'
-ui_page 'main.html'
-file 'main.html'
+client_script 'dist/client/client.js'
+ui_page 'build/index.html'
+file 'build/**'
 
-server_script 'inventory_server.js'
+server_script 'dist/server/server.js'

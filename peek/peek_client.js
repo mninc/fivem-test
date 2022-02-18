@@ -13,6 +13,12 @@ for (let key in models) {
 }
 let updateIn = -1;
 
+const peekablePeds = {};
+
+on("peek:registerPeekablePed", (entity, emitTo) => {
+    peekablePeds[entity] = emitTo;
+});
+
 setTick(() => {
     if (peekOpen) {
         DisableControlAction(0, 24, true);
@@ -61,49 +67,56 @@ RegisterCommand('-peek', async () => {
 
 function getOptions() {
     const options = []
-    let entity = getClosestEntity();
-    if (entity) {
-        let model = GetEntityModel(entity);
-        if (models.atm.includes(model)) {
-            options.push("atm");
+    let entities = getClosestEntities();
+    for (let i = 0; i < entities.length; i++) {
+        let entity = entities[i].entity;
+
+        const type = GetEntityType(entity);
+
+        if (type === 3) {
+            const model = GetEntityModel(entity);
+            if (models.atm.includes(model)) {
+                options.push("atm");
+            }
+        } else if (type === 1) {
+            if (peekablePeds[entity]) {
+                options.push(peekablePeds[entity]);
+            }
         }
     }
     return options;
 }
 
-function getClosestEntity() {
+function getClosestEntities() {
     const pC = GetEntityCoords(PlayerPedId(), false);
-    const closestEntity = {
-        entity: null,
-        distance: Number.MAX_SAFE_INTEGER,
-    };
+    const closestEntities = [];
     function processEntity(entity) {
-        const type = GetEntityType(entity);
-        if (type === 0 || type === 1) return; // no 'no object' or peds. need to add vehicle
         const eC = GetEntityCoords(entity);
         const distance = Math.hypot(pC[0] - eC[0], pC[1] - eC[1], pC[2] - eC[2]);
-        if (distance < 2 && distance < closestEntity.distance) {
-            const hash = GetEntityModel(entity);
-            if (searchModels.includes(hash)) {
-                closestEntity.entity = entity;
-                closestEntity.distance = distance;
-            }
+        if (distance < 2) {
+            closestEntities.push({ entity });
         }
     }
-    const firstObject = FindFirstObject();
-    processEntity(firstObject[1]);
-    let nextObject = FindNextObject(firstObject[0]);
-    while (nextObject[0]) {
-        processEntity(nextObject[1]);
-        nextObject = FindNextObject(firstObject[0]);
+
+    function process(FindFirst, FindNext, EndFind) {
+        const first = FindFirst();
+        processEntity(first[1]);
+        let next = FindNext(first[0]);
+        while (next[0]) {
+            processEntity(next[1]);
+            next = FindNext(first[0]);
+        }
+        EndFind(first[0]);
     }
-    EndFindObject(firstObject[0]);
-    return closestEntity.entity;
+
+    process(FindFirstObject, FindNextObject, EndFindObject);
+    process(FindFirstPed, FindNextPed, EndFindPed);
+    return closestEntities;
 }
 
 RegisterCommand("entitytest", () => {
-    let e = getClosestEntity();
-    console.log(e, GetEntityModel(e));
+    let e = getClosestEntities();
+    console.log(e, e.map(f => GetEntityModel(f.entity)));
 });
 
 RegisterNuiCallbackType('selectedOption')
@@ -116,7 +129,9 @@ on('__cfx_nui:selectedOption', async (data, cb) => {
     if (data.option) {
         if (data.option === "atm") {
             console.log("atm");
-            emit("bank:atm");
+            emit("bank:atm"); // TODO: rework so the atm option is just called bank:atm
+        } else if (data.option.includes(":")) {
+            emit(data.option);
         }
     }
 });

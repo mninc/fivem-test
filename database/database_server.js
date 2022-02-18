@@ -14,7 +14,7 @@ mongoose.connect(`mongodb://127.0.0.1:27017/manic-fivem`, {
     useNewUrlParser: true,
     useFindAndModify: false,
     useUnifiedTopology: true
-}, (err) => {
+}, async (err) => {
     if (err) {
         console.error('Mongoose startup error: ' + err);
         setTimeout(() => {
@@ -22,6 +22,12 @@ mongoose.connect(`mongodb://127.0.0.1:27017/manic-fivem`, {
         }, 1000 * 20);
     } else {
         console.info('Mongoose startup successful');
+
+        // not the best system
+        try {
+            await mongoose.connection.dropCollection("itemschemas");
+        } catch { }
+        database.models.ItemSchema.insertMany(require("./itemSchema.json"));
     }
 });
 
@@ -35,43 +41,105 @@ function getSteamid(NetID) {
     }
 }
 
-onNet("database:loadInventory", async (source, returnParam, containerID) => {
-    const steamid = getSteamid(source);
-    let inventory = await database.findOne(database.models.Container, { type: "inventory", identifier: steamid });
-    if (!inventory) {
-        inventory = new database.models.Container({ type: "inventory", identifier: steamid });
-        inventory.setItems();
-        database.save(inventory);
-    }
-    inventory = inventory.toJSON();
-    let itemIDs = [].concat(...inventory.items);
-    let container;
-    if (containerID) {
-        container = await database.findOne(database.models.Container, { identifier: containerID });
-        if (!container) {
-            container = new database.models.Container({ type: containerID.split("-")[0], identifier: containerID });
-            container.setItems();
-            database.save(container);
+async function loadContainer(query) {
+    // careful with a dodgy query
+    let slots = await database.models.Container.aggregate([
+        {
+            '$match': query
+        }, {
+            '$unwind': {
+                'path': '$items',
+                'includeArrayIndex': 'slot'
+            }
+        }, {
+            '$lookup': {
+                'from': 'items',
+                'localField': 'items',
+                'foreignField': '_id',
+                'as': 'itemAttributes'
+            }
+        }, {
+            '$unwind': {
+                'path': '$itemAttributes',
+                'includeArrayIndex': 'slotIndex',
+                'preserveNullAndEmptyArrays': true
+            }
+        }, {
+            '$lookup': {
+                'from': 'itemschemas',
+                'localField': 'itemAttributes.item_id',
+                'foreignField': 'item_id',
+                'as': 'itemSchemas'
+            }
+        }, {
+            '$project': {
+                'itemFinal': {
+                    '$mergeObjects': [
+                        {
+                            'item_id': -1
+                        }, {
+                            '$arrayElemAt': [
+                                '$itemSchemas', 0
+                            ]
+                        }, '$itemAttributes'
+                    ]
+                },
+                'slot': '$slot',
+                'slotIndex': '$slotIndex'
+            }
+        }, {
+            '$project': {
+                'itemFinal': {
+                    '$cond': {
+                        'if': {
+                            '$eq': [
+                                '$itemFinal.item_id', -1
+                            ]
+                        },
+                        'then': '$$REMOVE',
+                        'else': '$itemFinal'
+                    }
+                },
+                'slot': '$slot',
+                'slotIndex': '$slotIndex'
+            }
+        }, {
+            '$group': {
+                '_id': '$slot',
+                'items': {
+                    '$push': '$itemFinal'
+                }
+            }
+        }, {
+            '$project': {
+                '_id': 0,
+                'slot': '$_id',
+                'items': '$items'
+            }
+        }, {
+            '$sort': {
+                'slot': 1
+            }
         }
-        itemIDs = itemIDs.concat(...container.items);
-        container = container.toJSON();
+    ]);
+    if (!slots.length) {
+        let container = new database.models.Container(query);
+        container.setItems();
+        await container.save();
+        return await loadContainer(query);
+    } else {
+        return docToJSON(slots);
     }
-    let items = await database.find(database.models.Item, { _id: { $in: itemIDs } }, null, { lean: true });
-    items = items.map(item => {
-        item._id = item._id.toString();
-        return item;
-    });
-    emitNet("inventory:inventoryContents", source, returnParam, inventory, container, items);
+}
+
+onNet("database:updateContainer", async (source, data, emitTo) => {
+    console.log("update container", data);
+    await database.findOneAndUpdate(database.models.Container, data.query, { $set: { items: data.items } });
+    emitNet(emitTo, source, await loadContainer(data.query));
 });
 
-onNet("database:setSlot", async (container, slot, stack) => {
-    console.log("setting stack");
-    if (typeof container == "number") container = getSteamid(container);
-
-    const $set = {};
-    $set[`items.${slot}`] = stack;
-    database.findOneAndUpdate(database.models.Container, { identifier: container }, { $set });
-    console.log({ identifier: container }, { $set });
+onNet("database:loadContainer", async (source, query, emitTo) => {
+    emitNet(emitTo, source, await loadContainer(query));
 });
 
 onNet("database:setWeaponAmmo", async (source, mongoID, newAmmo) => {
@@ -117,7 +185,6 @@ onNet("database:deleteCharacter", async (source, character) => {
 });
 
 onNet("database:updateCharacter", async (source, character, updates) => {
-    console.log("update character", character, updates);
     await database.findOneAndUpdate(database.models.Character, { cid: character }, { $set: updates });
 });
 
@@ -138,7 +205,6 @@ onNet("database:loadAccounts", async (source, cid, emitTo) => {
 });
 
 onNet("database:processTransaction", async (source, data, emitTo) => {
-    console.log("process transaction", data);
     let account = await database.findOne(database.models.BankAccount, { id: data.accountNumber });
     let character = await database.findOne(database.models.Character, { cid: data.cid });
     if (!character || !account) return console.log("no account or char", character, account);
@@ -179,7 +245,6 @@ onNet("database:loadTransactions", async (source, data, emitTo) => {
 });
 
 onNet("database:addContact", async (source, data, emitTo) => {
-    console.log(data);
     await database.findOneAndUpdate(
         database.models.Contact,
         {
@@ -214,10 +279,7 @@ onNet("database:removeContact", async (source, data, emitTo) => {
 });
 
 onNet("database:smsThreadOverview", async (source, data, emitTo) => {
-    console.log("overview", data);
-    //let incoming = docToJSON(await database.models.TextMessage.find({ to: data.phoneNumber }).sort({ at: -1 }).distinct("from"));
     let incoming = await database.models.TextMessage.aggregate([
-        // each Object is an aggregation.
         {
             $match: {
                 $or: [
@@ -242,23 +304,6 @@ onNet("database:smsThreadOverview", async (source, data, emitTo) => {
             }
         }
     ])
-    console.log(incoming);
-    /*let outgoing = docToJSON(await database.models.TextMessage.find({ from: data.phoneNumber }).sort({ at: -1 }).distinct("to"));
-    console.log(outgoing);
-    outgoing.forEach(message => {
-        let matchingIncoming = incoming.find(incomingMessage => incomingMessage.from === message.to);
-        if (matchingIncoming) {
-            if (matchingIncoming.at < message.at) { // outgoing message is more recent
-                matchingIncoming.at = message.at;
-                matchingIncoming.from = message.from;
-                matchingIncoming.to = message.to;
-                matchingIncoming.content = message.content;
-            }
-        } else {
-            incoming.push(message);
-        }
-    });
-    console.log(incoming);*/
 
     emitNet(
         emitTo,
@@ -268,7 +313,6 @@ onNet("database:smsThreadOverview", async (source, data, emitTo) => {
 });
 
 onNet("database:loadContacts", async (source, data, emitTo) => {
-    console.log(data);
     emitNet(
         emitTo,
         source,
@@ -277,12 +321,10 @@ onNet("database:loadContacts", async (source, data, emitTo) => {
 });
 
 onNet("database:smsMessages", async (source, data, emitTo) => {
-    let d = docToJSON(await database.find(database.models.TextMessage, { $or: [{ from: data.phoneNumber, to: data.contactNumber }, { from: data.contactNumber, to: data.phoneNumber }] }, null, { sort: { at: 1 } }));
-    console.log(d);
     emitNet(
         emitTo,
         source,
-        d
+        docToJSON(await database.find(database.models.TextMessage, { $or: [{ from: data.phoneNumber, to: data.contactNumber }, { from: data.contactNumber, to: data.phoneNumber }] }, null, { sort: { at: 1 } }))
     );
 });
 
