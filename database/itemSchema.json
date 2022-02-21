@@ -14,5 +14,12 @@
         "description": "Smoke",
         "type": "consumable",
         "stackable": true
+    }, {
+        "item_id": "hacking_tool",
+        "icon": "https://miro.medium.com/max/407/1*JhDDq1fheTDRUjveaX91aQ.png",
+        "name": "Hacking Tool",
+        "description": "Hack Legion Square Bank",
+        "type": "equipment",
+        "stackable": false
     }
 ]

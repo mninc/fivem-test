@@ -1,12 +1,15 @@
-interface Item {
-    _id: string;
+interface ItemAttributes {
+    _id?: string;
     item_id: string;
+}
+interface Item extends ItemAttributes {
     ammo?: number;
     icon: string;
     name: string;
     description: string;
-    type: "weapon";
+    type: "weapon" | "consumable" | "equipment";
     weapon_hash?: string;
+    cost?: number;
 }
 interface ContainerSlot {
     items: Item[]
@@ -48,9 +51,20 @@ RegisterCommand('inventory', async () => {
         SetNuiFocus(
             true, true
         );
-        SendNuiMessage(JSON.stringify({ action: "enable_inventory" }));
+        SendNuiMessage(JSON.stringify({ action: "enable_inventory", shop: false }));
     }
 }, false);
+
+onNet('inventory:shop', async (shopInventory: Container) => {
+    inventory.container = shopInventory;
+    inventoryChange();
+    inventoryOpen = true;
+    SetNuiFocusKeepInput(true);
+    SetNuiFocus(
+        true, true
+    );
+    SendNuiMessage(JSON.stringify({ action: "enable_inventory", shop: true, cash: characterAttributes.cash }));
+});
 
 function inventoryChange() {
     SendNuiMessage(JSON.stringify({ action: "inventory", inventory }));
@@ -105,6 +119,23 @@ on("core:newAttributes", (newAttributes: CharacterAttributes) => {
     characterAttributes = newAttributes;
 });
 
+on("inventory:receiveItem", (item: ItemAttributes) => {
+    emitNet('database:newItem', GetPlayerServerId(PlayerId()), { item, container: { type: 'inventory', identifier: characterAttributes.cid.toString() } }, { itemAdded: 'inventory:newItem', container: 'inventory:loadedInventory' });
+});
+onNet('inventory:newItem', async (item: Item) => {
+    SendNuiMessage(JSON.stringify({ action: "showItem", item: { title: "Received 1x", icon: item.icon, name: item.name, _id: item._id } }));
+});
+
+RegisterNuiCallbackType('buyItems');
+on('__cfx_nui:buyItems', (data: { items: string[] }, cb: Function) => {
+    cb();
+    emitNet('database:boughtItems', GetPlayerServerId(PlayerId()), data.items, 'inventory:boughtItemsData');
+});
+
+onNet('inventory:boughtItemsData', async (items: string[]) => {
+    SendNuiMessage(JSON.stringify({ action: "bought_items", items }));
+});
+
 
 RegisterNuiCallbackType('closeInventory');
 on('__cfx_nui:closeInventory', (_: any, cb: Function) => {
@@ -113,6 +144,12 @@ on('__cfx_nui:closeInventory', (_: any, cb: Function) => {
     );
     inventoryOpen = false;
     cb();
+});
+
+RegisterNuiCallbackType('cashChange');
+on('__cfx_nui:cashChange', (data: any, cb: Function) => {
+    cb();
+    emit("core:setAttributes", { cash: characterAttributes.cash + data.change });
 });
 
 RegisterNuiCallbackType('updatedInventory');
@@ -143,7 +180,7 @@ async function useItem(item: Item) {
             RemoveAllPedWeapons(ped, true);
             GiveWeaponToPed(ped, item.weapon_hash, item.ammo, false, true);
             currentAmmo = item.ammo;
-            SendNuiMessage(JSON.stringify({ action: "equip_item", icon: item.icon }));
+            SendNuiMessage(JSON.stringify({ action: "showItem", item: { title: "Equipped", icon: item.icon, name: item.name, _id: item._id } }));
             itemEquipped = item.weapon_hash;
             ammoCheckInterval = setInterval(() => {
                 let newAmmo = GetAmmoInPedWeapon(ped, item.weapon_hash);
@@ -154,6 +191,7 @@ async function useItem(item: Item) {
             }, 2000);
         } else {
             GiveWeaponToPed(ped, "weapon_unarmed", 0, false, true);
+            SendNuiMessage(JSON.stringify({ action: "showItem", item: { title: "Holstered", icon: item.icon, name: item.name, _id: item._id } }));
             itemEquipped = null;
             clearInterval(ammoCheckInterval);
             currentAmmo = undefined;
@@ -186,16 +224,11 @@ RegisterKeyMapping('invuse 2', 'Inventory Slot 2', 'keyboard', '2');
 RegisterKeyMapping('invuse 3', 'Inventory Slot 3', 'keyboard', '3');
 RegisterKeyMapping('invuse 4', 'Inventory Slot 4', 'keyboard', '4');
 
-RegisterNuiCallbackType('setSlot')
-on('__cfx_nui:setSlot', async (data, cb) => {
+RegisterNuiCallbackType('elementFocus')
+on('__cfx_nui:elementFocus', (data: { focus: boolean }, cb: Function) => {
     cb();
-    SetNuiFocus(
-        false, false
-    );
-
-    emitNet('database:setSlot', data.container === "user" ? GetPlayerServerId(PlayerId()) : data.container, data.slot, data.stack);
+    SetNuiFocusKeepInput(!data.focus);
 });
-
 
 
 const dumpsterModels = ["prop_cs_dumpster_01a", "p_dumpster_t", "prop_dumpster_3a", "prop_dumpster_4b", "prop_dumpster_4a", "prop_dumpster_01a", "prop_dumpster_02b", "prop_dumpster_02a", "prop_snow_dumpster_01"];
@@ -232,7 +265,6 @@ function getBin() {
 
     //const type = GetEntityType(closestEntity.entity);
     const eC = GetEntityCoords(closestEntity.entity, true);
-    console.log(`dumpster-${Math.round(eC[0])}-${Math.round(eC[1])}-${Math.round(eC[2])}`);
     return `dumpster-${Math.round(eC[0])}-${Math.round(eC[1])}-${Math.round(eC[2])}`;
     // not the best system. improvements coule be made:
     // get coords when it first loads in (always spawns in unmoved?), a check for a saved dumpster within a few units around instead of just rounding

@@ -5,7 +5,7 @@ module.exports = mongoose.model('ItemSchema', {
     icon: String,
     name: String,
     description: String,
-    type: { type: String, enum: [ "weapon", "consumable" ] },
+    type: { type: String, enum: [ "weapon", "consumable", "equipment" ] },
     weapon_hash: String,
     stackable: Boolean,
 });

@@ -36,7 +36,6 @@ on("core:cid", cid => {
 });
 
 onNet("core:characterFromDatabase", character => {
-    console.log("updating");
     characterAttributes = {
         cid: character.cid,
         health: character.health,
@@ -44,7 +43,6 @@ onNet("core:characterFromDatabase", character => {
         cash: character.cash,
         phoneNumber: character.phoneNumber,
     };
-    console.log(characterAttributes);
     loaded = true;
     emit("core:newAttributes", characterAttributes);
 });

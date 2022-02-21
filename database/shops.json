@@ -1,0 +1,11 @@
+[
+    {
+        "id": "bank-robbery-vendor",
+        "items": [
+            {
+                "item_id": "hacking_tool",
+                "cost": 200
+            }
+        ]
+    }
+]

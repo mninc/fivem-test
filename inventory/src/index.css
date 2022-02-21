@@ -27,18 +27,38 @@ body {
 .slot {
     background-color: rgba(255, 255, 255, 0.4);
     border-radius: 10px;
-    margin: 20px;
-    width: 100px;
-    height: 100px;
+    margin: 5px;
+    width: 150px;
+    height: 150px;
 }
 
 .item {
-    width: 100px;
-    height: 100px;
+    width: 150px;
+    height: 150px;
     background-size: contain;
     background-repeat: no-repeat;
     background-color: rgba(255, 255, 255, 0.4);
     border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-size: 20px;
+}
+
+.item p {
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-popups {
+    position: absolute;
+    bottom: 300px;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
 }
 
 .equip-item {
