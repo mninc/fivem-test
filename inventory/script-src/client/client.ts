@@ -125,6 +125,12 @@ on("inventory:receiveItem", (item: ItemAttributes) => {
 onNet('inventory:newItem', async (item: Item) => {
     SendNuiMessage(JSON.stringify({ action: "showItem", item: { title: "Received 1x", icon: item.icon, name: item.name, _id: item._id } }));
 });
+on('inventory:removeItem', async (item: String) => {
+    emitNet('database:deleteItem', GetPlayerServerId(PlayerId()), { item, container: { type: 'inventory', identifier: characterAttributes.cid.toString() } }, { itemRemoved: 'inventory:removedItem', container: 'inventory:loadedInventory' });
+});
+onNet('inventory:removedItem', async (item: Item) => {
+    SendNuiMessage(JSON.stringify({ action: "showItem", item: { title: "Removed 1x", icon: item.icon, name: item.name, _id: item._id } }));
+});
 
 RegisterNuiCallbackType('buyItems');
 on('__cfx_nui:buyItems', (data: { items: string[] }, cb: Function) => {
@@ -195,6 +201,10 @@ async function useItem(item: Item) {
             itemEquipped = null;
             clearInterval(ammoCheckInterval);
             currentAmmo = undefined;
+        }
+    } else if (item.type === "equipment") {
+        if (item.item_id === "hacking_tool") {
+            emit("bank-robbery:use-tool", item._id, "inventory:removeItem");
         }
     }
 }

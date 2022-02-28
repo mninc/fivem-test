@@ -69,7 +69,8 @@ class Slot extends React.Component {
                         shop: true,
                         volume
                     };
-                    ui.helper.text(`x${volume}`);
+                    ui.helper.html(`<p>${dragged.items[0].name}</p>
+                        <p>x${volume}</p>`);
                 } else {
                     let volume = this.state.items[0].stackable ? (inventory.moveVolume || Number.MAX_SAFE_INTEGER) : 1;
                     let items = this.state.items.slice(0, volume);
@@ -80,7 +81,8 @@ class Slot extends React.Component {
                         shop: false
                     };
                     this.setItems(this.state.items.slice(volume));
-                    ui.helper.text(`x${dragged.items.length}`);
+                    ui.helper.html(`<p>${dragged.items[0].name}</p>
+                        <p>x${dragged.items.length}</p>`);
                 }
             },
             helper: "clone",
@@ -273,7 +275,7 @@ class Inventory extends React.Component {
                     <div className="inventory">
                         <div className="inventory-left">{this.renderContainer(this.state.inventory, "inventory")}</div>
                         <div className="inventory-mid">
-                            <input type="number" step="1" placeholder='move' onChange={event => this.moveVolume = parseInt(event.target.value)} />
+                            <Input type="number" step="1" placeholder='move' onChange={event => this.moveVolume = parseInt(event.target.value)} />
                         </div>
                         <div className="inventory-right">{this.renderContainer(this.state.container, "container")}</div>
                     </div>}

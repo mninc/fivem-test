@@ -140,7 +140,7 @@ async function loadItem(id) {
     let item = await database.models.Item.aggregate([
         {
             '$match': {
-                '_id': id
+                '_id': mongoose.Types.ObjectId(id)
             }
         }, {
             '$lookup': {
@@ -167,6 +167,7 @@ async function loadItem(id) {
             }
         }
     ]);
+    if (!item.length) return console.error("no item found", id);
     return docToJSON(item[0]);
 }
 
@@ -258,6 +259,22 @@ onNet("database:newItem", async (source, data, emitTo) => {
         console.log("inventory full");
     }
 
+});
+
+onNet("database:deleteItem", async (source, data, emitTo) => {
+    let container = await database.models.Container.findOne(data.container);
+    if (!container) return;
+
+    // should check existence of item
+
+    for (let i = 0; i < container.items.length; i++) {
+        container.items[i] = container.items[i].filter(item => item.toString() !== data.item);
+    }
+    container.markModified("items");
+    await container.save();
+
+    emitNet(emitTo.itemRemoved, source, await loadItem(data.item));
+    emitNet(emitTo.container, source, await loadContainer(data.container));
 });
 
 onNet("database:getCharacters", async (source) => {
