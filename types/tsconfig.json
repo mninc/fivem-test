@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "allowJs": true,
+    "target": "es6",
+    "types": [
+      "@citizenfx/client",
+      "@types/node"
+    ],
+    "declaration": true,
+    "declarationMap": true,
+    "rootDir": "./src",
+    "composite": true
+  },
+  "include": [
+    "./src/**/*"
+  ],
+  "references": []
+}

@@ -255,3 +255,32 @@ div.contacts div.contacts-upper {
 .tooltip {
     font-size: 25px;
 }
+
+.mid-section.task {
+
+}
+.task .step {
+    font-size: 20px;
+    margin: 10px;
+    width: calc(100% - 20px);
+    padding: 10px;
+    border-radius: 10px;
+    background-color: rgb(153, 153, 153);
+}
+
+.notifications {
+    position: absolute;
+    width: 450px;
+    height: 1000px;
+    overflow: hidden;
+}
+.notification {
+    font-size: 20px;
+    margin: 10px;
+    width: calc(100% - 20px);
+    padding: 10px;
+    border-radius: 10px;
+    background-color: rgb(153, 153, 153);
+    position: absolute;
+    transition: top 1000ms;
+}

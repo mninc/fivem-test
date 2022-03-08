@@ -55,7 +55,11 @@ class Phone extends React.Component {
                 hours: -1,
                 minutes: -1
             },
-            smsOverview: []
+            smsOverview: [],
+            task: {
+                steps: []
+            },
+            notifications: []
         };
         this.contactsLoaded = false;
     }
@@ -164,6 +168,31 @@ class Phone extends React.Component {
         return contact ? contact.name : number;
     }
 
+    incomingNotification(notification) {
+        notification.removeID = Math.random();
+        notification.hiding = false;
+        notification.showing = false;
+        this.state.notifications.push(notification);
+        this.setState({ notifications: this.state.notifications });
+        setTimeout(() => {
+            notification.showing = true;
+            this.setState({
+                notifications: this.state.notifications
+            });
+        }, 10);
+        setTimeout(() => {
+            notification.hiding = true;
+            this.setState({
+                notifications: this.state.notifications
+            });
+        }, 2000);
+        setTimeout(() => {
+            this.setState({
+                notifications: this.state.notifications.filter(it => it.removeID !== notification.removeID)
+            });
+        }, 3000);
+    }
+
     getMidSection() {
         if (this.state.page[0] === "home") {
             return (
@@ -179,6 +208,9 @@ class Phone extends React.Component {
                     </TooltipHover>
                     <TooltipHover title="Information">
                         <div className="app"><i class="fas fa-info-circle"></i></div>
+                    </TooltipHover>
+                    <TooltipHover title="Task">
+                        <div className="app" onClick={() => this.setPage(["task"])}><i class="fas fa-tasks"></i></div>
                     </TooltipHover>
                 </div>
             )
@@ -224,7 +256,7 @@ class Phone extends React.Component {
             if (other) {
                 let theirNumber = other;
                 let theirName = this.resolveContactName(theirNumber);
-                
+
                 let messages = [];
                 if (this.state.smsMessages) {
                     for (let i = 0; i < this.state.smsMessages.length; i++) {
@@ -270,6 +302,30 @@ class Phone extends React.Component {
                     </div>
                 )
             }
+        } else if (this.state.page[0] === "task") {
+            let steps = [];
+            for (let i = 0; i < this.state.task.steps.length; i++) {
+                let step = this.state.task.steps[i];
+                let icon;
+                if (step.state === 0) { // to do
+                    icon = <i class="fas fa-ellipsis-h"></i>;
+                } else if (step.state === 1) { // in progress
+                    icon = <i class="fas fa-clock"></i>;
+                } else if (step.state === 2) { // done
+                    icon = <i class="fas fa-check-circle"></i>;
+                }
+                steps.push(
+                    <div className="step">
+                        <p>{icon} <b>{step.heading}</b></p>
+                        {step.body && <p>{step.body}</p>}
+                    </div>
+                );
+            }
+            return (
+                <div className="mid-section task">
+                    {steps}
+                </div>
+            )
         }
     }
 
@@ -288,10 +344,32 @@ class Phone extends React.Component {
                 </div>
             </div>;
         }
+
+        let notifications = [];
+        let notHidingIndex = 0;
+        for (let i = 0; i < this.state.notifications.length; i++) {
+            let notification = this.state.notifications[i];
+
+            let top = notification.hiding || !notification.showing ? -60 : notHidingIndex * 60;
+
+            notifications.push(
+                <div className="notification" style={{ top: `${top}px` }} key={notification.removeID}>
+                    <p>{notification.title}</p>
+                </div>
+            );
+            if (!notification.hiding) notHidingIndex++;
+        }
+
+        let bottom = "-900px";
+        if (this.state.up) bottom = "0px";
+        else if (this.state.notifications.length) bottom = "-700px";
         return (
-            <div className="phone" style={{ bottom: this.state.up ? "0px" : "-900px" }}>
+            <div className="phone" style={{ bottom }}>
                 <div className="phone-screen">
                     {modal}
+                    <div className="notifications">
+                        {notifications}
+                    </div>
                     <div className="status-bar">
                         <div className="status-left">
                             <p>{String(this.state.time.hours).padStart(2, '0')}:{String(this.state.time.minutes).padStart(2, '0')}</p>
@@ -336,5 +414,11 @@ window.addEventListener('message', (event) => {
         phone.setState({ smsOverview: data.overview });
     } else if (data.action === "smsMessages") {
         phone.setState({ smsMessages: data.messages });
+    } else if (data.action === "task") {
+        phone.setState({
+            task: data.task
+        });
+    } else if (data.action === "notification") {
+        phone.incomingNotification(data.notification);
     }
 });

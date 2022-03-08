@@ -472,3 +472,56 @@ onNet("database:sendSMS", async (source, data, emitTo) => {
         { number: data.contactNumber }
     );
 });
+
+
+function addStepsToTask(task) {
+    let steps = task.generateSteps();
+    task = docToJSON(task);
+    task.steps = steps;
+    return task;
+}
+async function loadTask(query) {
+    let task = await database.models.Task.findOne(query);
+    if (!task) return;
+    task = addStepsToTask(task);
+    return task;
+}
+
+onNet("database:createTask", async(source, data, emitTo) => {
+    await database.models.Task.updateMany({ cid: data.cid, in_progress: true }, { $set: { in_progress: false } });
+    let task = new database.models.Task({
+        cid: data.cid,
+        task_type: data.task_type,
+        current_step: 0,
+        in_progress: true,
+        complete: false,
+        started: new Date(),
+        vehicle: data.vehicle,
+    });
+    await task.save();
+    emitNet(
+        emitTo,
+        source,
+        addStepsToTask(task)
+    );
+});
+
+onNet("database:loadTask", async (source, data, emitTo) => {
+    emitNet(
+        emitTo,
+        source,
+        await loadTask({
+            cid: data.cid,
+            in_progress: true
+        })
+    );
+});
+
+onNet("database:updateTask", async (source, data, emitTo) => {
+    await database.models.Task.updateOne({ _id: data.task }, { $set: data.update });
+    emitNet(
+        emitTo,
+        source,
+        await loadTask({ _id: data.task })
+    );
+});

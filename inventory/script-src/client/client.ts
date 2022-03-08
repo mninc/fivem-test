@@ -1,33 +1,4 @@
-interface ItemAttributes {
-    _id?: string;
-    item_id: string;
-}
-interface Item extends ItemAttributes {
-    ammo?: number;
-    icon: string;
-    name: string;
-    description: string;
-    type: "weapon" | "consumable" | "equipment";
-    weapon_hash?: string;
-    cost?: number;
-}
-interface ContainerSlot {
-    items: Item[]
-}
-type Container = ContainerSlot[];
-interface Inventory {
-    character: Container;
-    container: Container;
-}
-interface CharacterAttributes {
-    cid: number;
-    health: number;
-    ped: string;
-    cash: number;
-    phoneNumber: number;
-}
-
-
+import { Container, Inventory, CharacterAttributes, ItemAttributes, Item } from '../../../types/dist';
 
 RegisterKeyMapping('inventory', 'Inventory', 'keyboard', 'h');
 let inventoryOpen = false;

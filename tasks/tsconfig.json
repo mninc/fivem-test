@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "outDir": "../dist",
+    "outDir": "dist",
     "allowJs": true,
     "target": "es5",
     "types": [
@@ -10,11 +10,11 @@
     "moduleResolution": "node"
   },
   "include": [
-    "./**/*"
+    "./src/**/*"
   ],
   "references": [
     {
-      "path": "../../types"
+      "path": "../types"
     }
   ]
 }

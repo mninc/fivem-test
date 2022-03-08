@@ -114,3 +114,19 @@ on('__cfx_nui:sendSMS', (data, cb) => {
 onNet("phone:sentSMS", data => {
     emitNet("database:smsMessages", GetPlayerServerId(PlayerId()), { phoneNumber: characterAttributes.phoneNumber, contactNumber: data.number }, "phone:smsMessages");
 });
+
+
+let currentTaskStep;
+on("phone:task", task => {
+    SendNuiMessage(JSON.stringify({ action: "task", task }));
+    for (let i = 0; i < task.steps.length; i++) {
+        let step = task.steps[i];
+        if (step.state === 1) {
+            if (currentTaskStep !== step.heading) {
+                currentTaskStep = step.heading;
+                SendNuiMessage(JSON.stringify({ action: "notification", notification: { title: currentTaskStep } }));
+            }
+            break;
+        }
+    }
+});

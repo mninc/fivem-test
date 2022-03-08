@@ -7,3 +7,4 @@ exports.BankTransaction = require('./BankTransaction');
 exports.Contact = require('./Contact');
 exports.TextMessage = require('./TextMessage');
 exports.Shop = require('./Shop');
+exports.Task = require('./Task');

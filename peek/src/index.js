@@ -44,6 +44,13 @@ class Peek extends React.Component {
                         Get Bank Supplies
                     </p>
                 )
+            } else if (option === "tasks:start-boost") {
+                buttons.push(
+                    <p id={option} onClick={() => this.selectOption(option)}>
+                        <i class="fas fa-car"></i>
+                        Start Boost
+                    </p>
+                )
             }
 
         }
