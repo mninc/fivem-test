@@ -15,7 +15,7 @@ RegisterCommand('inventory', async () => {
         inventoryChange();
         otherContainer = getBin();
         if (otherContainer) {
-            emitNet('database:loadContainer', GetPlayerServerId(PlayerId()), { type: otherContainer.split("-")[0], identifier: otherContainer }, 'inventory:loadedContainer');
+            emitNet('database:loadContainer', { type: otherContainer.split("-")[0], identifier: otherContainer }, 'inventory:loadedContainer');
         }
         inventoryOpen = true;
         SetNuiFocusKeepInput(true);
@@ -85,19 +85,19 @@ let characterAttributes: CharacterAttributes = null;
 on("core:newAttributes", (newAttributes: CharacterAttributes) => {
     if (characterAttributes === null || characterAttributes.cid !== newAttributes.cid) {
         inventory.character = [];
-        emitNet('database:loadContainer', GetPlayerServerId(PlayerId()), { type: 'inventory', identifier: newAttributes.cid.toString() }, 'inventory:loadedInventory');
+        emitNet('database:loadContainer', { type: 'inventory', identifier: newAttributes.cid.toString() }, 'inventory:loadedInventory');
     }
     characterAttributes = newAttributes;
 });
 
 on("inventory:receiveItem", (item: ItemAttributes) => {
-    emitNet('database:newItem', GetPlayerServerId(PlayerId()), { item, container: { type: 'inventory', identifier: characterAttributes.cid.toString() } }, { itemAdded: 'inventory:newItem', container: 'inventory:loadedInventory' });
+    emitNet('database:newItem', { item, container: { type: 'inventory', identifier: characterAttributes.cid.toString() } }, { itemAdded: 'inventory:newItem', container: 'inventory:loadedInventory' });
 });
 onNet('inventory:newItem', async (item: Item) => {
     SendNuiMessage(JSON.stringify({ action: "showItem", item: { title: "Received 1x", icon: item.icon, name: item.name, _id: item._id } }));
 });
 on('inventory:removeItem', async (item: String) => {
-    emitNet('database:deleteItem', GetPlayerServerId(PlayerId()), { item, container: { type: 'inventory', identifier: characterAttributes.cid.toString() } }, { itemRemoved: 'inventory:removedItem', container: 'inventory:loadedInventory' });
+    emitNet('database:deleteItem', { item, container: { type: 'inventory', identifier: characterAttributes.cid.toString() } }, { itemRemoved: 'inventory:removedItem', container: 'inventory:loadedInventory' });
 });
 onNet('inventory:removedItem', async (item: Item) => {
     SendNuiMessage(JSON.stringify({ action: "showItem", item: { title: "Removed 1x", icon: item.icon, name: item.name, _id: item._id } }));
@@ -106,7 +106,7 @@ onNet('inventory:removedItem', async (item: Item) => {
 RegisterNuiCallbackType('buyItems');
 on('__cfx_nui:buyItems', (data: { items: string[] }, cb: Function) => {
     cb();
-    emitNet('database:boughtItems', GetPlayerServerId(PlayerId()), data.items, 'inventory:boughtItemsData');
+    emitNet('database:boughtItems', data.items, 'inventory:boughtItemsData');
 });
 
 onNet('inventory:boughtItemsData', async (items: string[]) => {
@@ -133,9 +133,9 @@ RegisterNuiCallbackType('updatedInventory');
 on('__cfx_nui:updatedInventory', (data: any, cb: Function) => {
     cb();
 
-    emitNet('database:updateContainer', GetPlayerServerId(PlayerId()), { query: { type: 'inventory', identifier: characterAttributes.cid.toString() }, items: data.inventory.inventory }, 'inventory:loadedInventory');
+    emitNet('database:updateContainer', { query: { type: 'inventory', identifier: characterAttributes.cid.toString() }, items: data.inventory.inventory }, 'inventory:loadedInventory');
     if (otherContainer && data.inventory.container.length) {
-        emitNet('database:updateContainer', GetPlayerServerId(PlayerId()), { query: { type: otherContainer.split("-")[0], identifier: otherContainer }, items: data.inventory.container }, 'inventory:loadedContainer');
+        emitNet('database:updateContainer', { query: { type: otherContainer.split("-")[0], identifier: otherContainer }, items: data.inventory.container }, 'inventory:loadedContainer');
     }
 });
 
@@ -163,7 +163,7 @@ async function useItem(item: Item) {
                 let newAmmo = GetAmmoInPedWeapon(ped, item.weapon_hash);
                 if (newAmmo !== currentAmmo) {
                     currentAmmo = newAmmo;
-                    emitNet('database:setWeaponAmmo', GetPlayerServerId(PlayerId()), item._id, newAmmo);
+                    emitNet('database:setWeaponAmmo', item._id, newAmmo);
                 }
             }, 2000);
         } else {

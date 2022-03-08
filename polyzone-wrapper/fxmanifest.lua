@@ -19,3 +19,13 @@ client_scripts {
     'zones.lua',
     'pz-wrapper-client.lua'
 }
+
+server_scripts {
+    '@PolyZone/client.lua',
+    '@PolyZone/BoxZone.lua',
+    '@PolyZone/EntityZone.lua',
+    '@PolyZone/CircleZone.lua',
+    '@PolyZone/ComboZone.lua',
+    'zones.lua',
+    'pz-wrapper-server.lua'
+}

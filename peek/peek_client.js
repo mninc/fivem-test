@@ -17,6 +17,7 @@ const peekablePeds = {};
 
 on("peek:registerPeekablePed", (entity, emitTo) => {
     peekablePeds[entity] = emitTo;
+    console.log(peekablePeds);
 });
 
 setTick(() => {
@@ -80,10 +81,12 @@ function getOptions() {
             }
         } else if (type === 1) {
             if (peekablePeds[entity]) {
-                options.push(peekablePeds[entity]);
+                console.log(peekablePeds[entity]);
+                options.push(...peekablePeds[entity]);
             }
         }
     }
+    console.log(options);
     return options;
 }
 

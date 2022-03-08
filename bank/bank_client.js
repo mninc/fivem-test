@@ -1,6 +1,6 @@
 on("bank:atm", () => {
     if (!playerAttributes) return;
-    emitNet("database:loadAccounts", GetPlayerServerId(PlayerId()), playerAttributes.cid, "bank:loadedAccounts");
+    emitNet("database:loadAccounts", playerAttributes.cid, "bank:loadedAccounts");
 });
 
 onNet("bank:loadedAccounts", accounts => {
@@ -28,7 +28,7 @@ on('__cfx_nui:cashChange', (data, cb) => {
     );
     cb();
 
-    emitNet("database:processTransaction", GetPlayerServerId(PlayerId()), {
+    emitNet("database:processTransaction", {
         cid: playerAttributes.cid,
         accountNumber: data.accountNumber,
         amount: data.amount,
@@ -52,7 +52,7 @@ onNet("bank:finishedTransaction", data => {
 RegisterNuiCallbackType('loadTransactions')
 on('__cfx_nui:loadTransactions', (data, cb) => {
     cb();
-    emitNet("database:loadTransactions", GetPlayerServerId(PlayerId()), {
+    emitNet("database:loadTransactions", {
         accountNumber: data.accountNumber,
     }, "bank:loadedTransactions");
 });

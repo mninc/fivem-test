@@ -171,13 +171,14 @@ async function loadItem(id) {
     return docToJSON(item[0]);
 }
 
-onNet("database:updateContainer", async (source, data, emitTo) => {
+onNet("database:updateContainer", async (data, emitTo) => {
+    let source = global.source;
     await database.findOneAndUpdate(database.models.Container, data.query, { $set: { items: data.items } });
     emitNet(emitTo, source, await loadContainer(data.query));
 });
 
-onNet("database:loadContainer", async (source, query, emitTo) => {
-    emitNet(emitTo, source, await loadContainer(query));
+onNet("database:loadContainer", async (query, emitTo) => {
+    emitNet(emitTo, global.source, await loadContainer(query));
 });
 
 async function loadShop(id) {
@@ -216,11 +217,12 @@ async function loadShop(id) {
     return docToJSON(shop);
 }
 
-onNet("database:loadShop", async (source, id, emitTo) => {
-    emitNet(emitTo, source, await loadShop(id));
+onNet("database:loadShop", async (id, emitTo) => {
+    emitNet(emitTo, global.source, await loadShop(id));
 });
 
-onNet("database:boughtItems", async (source, items, emitTo) => {
+onNet("database:boughtItems", async (items, emitTo) => {
+    let source = global.source;
     let ids = [];
     for (let i = 0; i < items.length; i++) {
         let item = new database.models.Item({
@@ -232,11 +234,12 @@ onNet("database:boughtItems", async (source, items, emitTo) => {
     emitNet(emitTo, source, docToJSON(ids));
 });
 
-onNet("database:setWeaponAmmo", async (source, mongoID, newAmmo) => {
+onNet("database:setWeaponAmmo", async (mongoID, newAmmo) => {
     database.findByIdAndUpdate(database.models.Item, mongoID, { $set: { ammo: newAmmo } });
 });
 
-onNet("database:newItem", async (source, data, emitTo) => {
+onNet("database:newItem", async (data, emitTo) => {
+    let source = global.source;
     // TODO: weight
     let item = new database.models.Item(data.item);
     let container = await loadContainer(data.container);
@@ -261,7 +264,8 @@ onNet("database:newItem", async (source, data, emitTo) => {
 
 });
 
-onNet("database:deleteItem", async (source, data, emitTo) => {
+onNet("database:deleteItem", async (data, emitTo) => {
+    let source = global.source;
     let container = await database.models.Container.findOne(data.container);
     if (!container) return;
 
@@ -277,14 +281,15 @@ onNet("database:deleteItem", async (source, data, emitTo) => {
     emitNet(emitTo.container, source, await loadContainer(data.container));
 });
 
-onNet("database:getCharacters", async (source) => {
+onNet("database:getCharacters", async () => {
+    let source = global.source;
     const steamid = getSteamid(source);
     const characters = await database.find(database.models.Character, { steamid });
     emitNet("character_selector:characters", source, docToJSON(characters));
 });
 
-onNet("database:getCharacter", async (source, cid, emitTo) => {
-    emitNet(emitTo, source, docToJSON(await database.findOne(database.models.Character, { cid })));
+onNet("database:getCharacter", async (cid, emitTo) => {
+    emitNet(emitTo, global.source, docToJSON(await database.findOne(database.models.Character, { cid })));
 });
 
 let nextCharacterID = -1;
@@ -294,7 +299,8 @@ on('onServerResourceStart', async resource => {
     nextCharacterID = character ? (character.cid + 1) : 1000;
 });
 
-onNet("database:createCharacter", async (source, characterData) => {
+onNet("database:createCharacter", async (characterData) => {
+    let source = global.source;
     const character = new database.models.Character({
         steamid: getSteamid(source),
         ped: characterData.ped,
@@ -310,16 +316,18 @@ onNet("database:createCharacter", async (source, characterData) => {
     emitNet("character_selector:finishedCreatingCharacter", source);
 });
 
-onNet("database:deleteCharacter", async (source, character) => {
+onNet("database:deleteCharacter", async (character) => {
+    let source = global.source;
     await database.deleteOne(database.models.Character, { cid: character.character });
     emitNet("character_selector:deletedCharacter", source);
 });
 
-onNet("database:updateCharacter", async (source, character, updates) => {
+onNet("database:updateCharacter", async (character, updates) => {
     await database.findOneAndUpdate(database.models.Character, { cid: character }, { $set: updates });
 });
 
-onNet("database:loadAccounts", async (source, cid, emitTo) => {
+onNet("database:loadAccounts", async (cid, emitTo) => {
+    let source = global.source;
     let accounts = await database.find(database.models.BankAccount, { access: cid });
     if (!accounts.length) {
         let personalAccount = new database.models.BankAccount({
@@ -335,7 +343,8 @@ onNet("database:loadAccounts", async (source, cid, emitTo) => {
     emitNet(emitTo, source, docToJSON(accounts));
 });
 
-onNet("database:processTransaction", async (source, data, emitTo) => {
+onNet("database:processTransaction", async (data, emitTo) => {
+    let source = global.source;
     let account = await database.findOne(database.models.BankAccount, { id: data.accountNumber });
     let character = await database.findOne(database.models.Character, { cid: data.cid });
     if (!character || !account) return console.log("no account or char", character, account);
@@ -367,15 +376,16 @@ onNet("database:processTransaction", async (source, data, emitTo) => {
     emitNet(emitTo, source, data);
 });
 
-onNet("database:loadTransactions", async (source, data, emitTo) => {
+onNet("database:loadTransactions", async (data, emitTo) => {
     emitNet(
         emitTo,
-        source,
+        global.source,
         docToJSON(await database.find(database.models.BankTransaction, { accountNumber: data.accountNumber }, null, { sort: { at: -1 }, limit: 20 }))
     );
 });
 
-onNet("database:addContact", async (source, data, emitTo) => {
+onNet("database:addContact", async (data, emitTo) => {
+    let source = global.source;
     await database.findOneAndUpdate(
         database.models.Contact,
         {
@@ -395,7 +405,8 @@ onNet("database:addContact", async (source, data, emitTo) => {
     );
 });
 
-onNet("database:removeContact", async (source, data, emitTo) => {
+onNet("database:removeContact", async (data, emitTo) => {
+    let source = global.source;
     await database.deleteOne(
         database.models.Contact,
         {
@@ -409,7 +420,8 @@ onNet("database:removeContact", async (source, data, emitTo) => {
     );
 });
 
-onNet("database:smsThreadOverview", async (source, data, emitTo) => {
+onNet("database:smsThreadOverview", async (data, emitTo) => {
+    let source = global.source;
     let incoming = await database.models.TextMessage.aggregate([
         {
             $match: {
@@ -443,23 +455,24 @@ onNet("database:smsThreadOverview", async (source, data, emitTo) => {
     );
 });
 
-onNet("database:loadContacts", async (source, data, emitTo) => {
+onNet("database:loadContacts", async (data, emitTo) => {
     emitNet(
         emitTo,
-        source,
+        global.source,
         docToJSON(await database.find(database.models.Contact, { phoneBook: data.phoneNumber }))
     );
 });
 
-onNet("database:smsMessages", async (source, data, emitTo) => {
+onNet("database:smsMessages", async (data, emitTo) => {
     emitNet(
         emitTo,
-        source,
+        global.source,
         docToJSON(await database.find(database.models.TextMessage, { $or: [{ from: data.phoneNumber, to: data.contactNumber }, { from: data.contactNumber, to: data.phoneNumber }] }, null, { sort: { at: 1 } }))
     );
 });
 
-onNet("database:sendSMS", async (source, data, emitTo) => {
+onNet("database:sendSMS", async (data, emitTo) => {
+    let source = global.source;
     await database.save(database.models.TextMessage({
         from: data.phoneNumber,
         to: data.contactNumber,
@@ -473,24 +486,84 @@ onNet("database:sendSMS", async (source, data, emitTo) => {
     );
 });
 
+async function loadTasksJSON(query) {
+    let tasks = await database.models.Task.aggregate([
+        {
+            '$match': query
+        }, {
+            '$lookup': {
+                'from': 'characters',
+                'localField': 'characters',
+                'foreignField': 'cid',
+                'as': 'serverIds'
+            }
+        }, {
+            '$addFields': {
+                'serverIds': {
+                    '$map': {
+                        'input': '$serverIds',
+                        'in': '$$this.playerServerId'
+                    }
+                }
+            }
+        }
+    ]);
+    tasks = docToJSON(tasks);
 
-function addStepsToTask(task) {
-    let steps = task.generateSteps();
-    task = docToJSON(task);
-    task.steps = steps;
-    return task;
-}
-async function loadTask(query) {
-    let task = await database.models.Task.findOne(query);
-    if (!task) return;
-    task = addStepsToTask(task);
-    return task;
+    for (let i = 0; i < tasks.length; i++) {
+        let task = tasks[i];
+
+        task.steps = [];
+        if (task.task_type === "boost") {
+            task.steps = [
+                {
+                    heading: "Find and steal the car"
+                }, {
+                    heading: "Take the car to the drop off spot"
+                }, {
+                    heading: "Leave the area"
+                }
+            ];
+        }
+
+        for (let j = 0; j < task.steps.length; j++) {
+            let step = task.steps[j];
+            if (task.complete) {
+                step.state = 2;
+            } else if (task.current_step < j) { // not yet done
+                step.state = 0;
+            } else if (task.current_step === j) { // in progress
+                step.state = 1;
+            } else { // done
+                step.state = 2;
+            }
+        }
+    }
+
+    return tasks;
 }
 
-onNet("database:createTask", async(source, data, emitTo) => {
-    await database.models.Task.updateMany({ cid: data.cid, in_progress: true }, { $set: { in_progress: false } });
+async function loadTaskJSON(query) {
+    let tasks = await loadTasksJSON(query);
+    if (!tasks.length) return;
+    return tasks[0];
+}
+
+on("database:createTask", async (data, emitTo) => {
+    let tasks = await database.models.Task.find({ owner_cid: data.cid, in_progress: true });
+    for (let i = 0; i < tasks.length; i++) {
+        let task = tasks[i];
+        task.in_progress = false;
+        await task.save();
+        emit(
+            emitTo,
+            await loadTaskJSON({ _id: mongoose.Types.ObjectId(task._id) })
+        );
+    }
+
     let task = new database.models.Task({
-        cid: data.cid,
+        owner_cid: data.cid,
+        characters: [data.cid],
         task_type: data.task_type,
         current_step: 0,
         in_progress: true,
@@ -499,29 +572,60 @@ onNet("database:createTask", async(source, data, emitTo) => {
         vehicle: data.vehicle,
     });
     await task.save();
-    emitNet(
+    emit(
         emitTo,
-        source,
-        addStepsToTask(task)
+        await loadTaskJSON({ _id: mongoose.Types.ObjectId(task._id) })
     );
 });
 
-onNet("database:loadTask", async (source, data, emitTo) => {
-    emitNet(
+on("database:loadTask", async (data, emitTo) => {
+    emit(
         emitTo,
-        source,
-        await loadTask({
+        await loadTaskJSON({
             cid: data.cid,
             in_progress: true
         })
     );
 });
 
-onNet("database:updateTask", async (source, data, emitTo) => {
+on("database:loadActiveTasks", async (emitTo) => {
+    let tasks = await loadTasksJSON({
+        in_progress: true
+    });
+    console.log(tasks);
+    for (let i = 0; i < tasks.length; i++) {
+        emit(
+            emitTo,
+            tasks[i]
+        );
+    }
+});
+
+on("database:updateTask", async (data, emitTo) => {
     await database.models.Task.updateOne({ _id: data.task }, { $set: data.update });
-    emitNet(
+    console.log(data.task);
+    emit(
         emitTo,
-        source,
-        await loadTask({ _id: data.task })
+        await loadTaskJSON({ _id: mongoose.Types.ObjectId(data.task) })
     );
+});
+
+onNet("database:characterSelected", async (cid) => {
+    let source = global.source;
+    let steamid = getSteamid(source);
+    await database.models.Character.updateMany({ steamid }, { $set: { playerServerId: null } });
+    await database.models.Character.updateOne({ steamid, cid }, { $set: { playerServerId: source } });
+    emit(
+        "tasks:loaded-task",
+        await loadTaskJSON({
+            owner_cid: cid,
+            in_progress: true
+        })
+    );
+});
+
+on("playerDropped", async () => {
+    let source = global.source;
+    let steamid = getSteamid(source);
+    await database.models.Character.updateMany({ steamid }, { $set: { playerServerId: null } });
 });

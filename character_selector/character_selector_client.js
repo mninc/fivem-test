@@ -159,7 +159,7 @@ Delay = (ms) => new Promise(res => setTimeout(res, ms));
 RegisterNuiCallbackType('finishNewCharacter')
 on('__cfx_nui:finishNewCharacter', async (data, cb) => {
     cb();
-    emitNet('database:createCharacter', GetPlayerServerId(PlayerId()), {
+    emitNet('database:createCharacter', {
         name: data.name,
         ped: data.ped
     });
@@ -172,7 +172,7 @@ onNet('character_selector:finishedCreatingCharacter', () => {
 RegisterNuiCallbackType('deleteCharacter')
 on('__cfx_nui:deleteCharacter', async (data, cb) => {
     cb();
-    emitNet('database:deleteCharacter', GetPlayerServerId(PlayerId()), {
+    emitNet('database:deleteCharacter', {
         character: data.character
     });
 });
@@ -196,6 +196,7 @@ on('__cfx_nui:selectedCharacter', async (data, cb) => {
     if (!character) return;
     cid = character.cid;
     emit("core:cid", cid);
+    emitNet("database:characterSelected", cid);
     await getModel(character.ped);
     SetPlayerModel(player, character.ped);
     SetPedDefaultComponentVariation(player);

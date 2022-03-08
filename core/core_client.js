@@ -17,7 +17,7 @@ on("core:setAttributes", async (updates, justLoaded) => {
     }
     
     if (Object.keys(databaseUpdates).length > 0) {
-        emitNet("database:updateCharacter", GetPlayerServerId(PlayerId()), characterAttributes["cid"], databaseUpdates);
+        emitNet("database:updateCharacter", characterAttributes["cid"], databaseUpdates);
     }
     
     for (let key in updates) {
@@ -32,7 +32,7 @@ on('onResourceStart', resource => {
 });
 
 on("core:cid", cid => {
-    emitNet("database:getCharacter", GetPlayerServerId(PlayerId()), cid, "core:characterFromDatabase");
+    emitNet("database:getCharacter", cid, "core:characterFromDatabase");
 });
 
 onNet("core:characterFromDatabase", character => {

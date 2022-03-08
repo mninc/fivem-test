@@ -30,7 +30,7 @@ async function start() {
 start();
 
 on("bank-robbery:ped", () => {
-    emitNet('database:loadShop', GetPlayerServerId(PlayerId()), "bank-robbery-vendor", 'inventory:shop');
+    emitNet('database:loadShop', "bank-robbery-vendor", 'inventory:shop');
 });
 
 on("bank-robbery:use-tool", (id, removeItemEmitTo) => {

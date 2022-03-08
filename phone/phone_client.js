@@ -3,7 +3,7 @@ let characterAttributes;
 
 SetNuiFocusKeepInput(true);
 
-RegisterKeyMapping('phone', 'Phone', 'keyboard', 'o');
+RegisterKeyMapping('phone', 'Phone', 'keyboard', 'p');
 RegisterCommand('phone', async () => {
     if (phoneOpen) {
         phoneOpen = false;
@@ -43,13 +43,13 @@ setTick(() => {
 RegisterNuiCallbackType('addContact')
 on('__cfx_nui:addContact', (data, cb) => {
     cb();
-    emitNet("database:addContact", GetPlayerServerId(PlayerId()), { phoneNumber: characterAttributes.phoneNumber, contactName: data.name, contactNumber: data.number }, "phone:processedContactsChange");
+    emitNet("database:addContact", { phoneNumber: characterAttributes.phoneNumber, contactName: data.name, contactNumber: data.number }, "phone:processedContactsChange");
 });
 
 RegisterNuiCallbackType('removeContact')
 on('__cfx_nui:removeContact', (data, cb) => {
     cb();
-    emitNet("database:removeContact", GetPlayerServerId(PlayerId()), { phoneNumber: characterAttributes.phoneNumber, contactNumber: data.number }, "phone:processedContactsChange");
+    emitNet("database:removeContact", { phoneNumber: characterAttributes.phoneNumber, contactNumber: data.number }, "phone:processedContactsChange");
 });
 
 onNet("phone:processedContactsChange", () => {
@@ -60,7 +60,7 @@ RegisterNuiCallbackType('loadContacts')
 on('__cfx_nui:loadContacts', (data, cb) => {
     cb();
     console.log("loading contacts")
-    emitNet("database:loadContacts", GetPlayerServerId(PlayerId()), { phoneNumber: characterAttributes.phoneNumber }, "phone:contacts");
+    emitNet("database:loadContacts", { phoneNumber: characterAttributes.phoneNumber }, "phone:contacts");
 });
 
 onNet("phone:contacts", contacts => {
@@ -82,7 +82,7 @@ function sendTime() {
 RegisterNuiCallbackType('loadSMSOverview')
 on('__cfx_nui:loadSMSOverview', (data, cb) => {
     cb();
-    emitNet("database:smsThreadOverview", GetPlayerServerId(PlayerId()), { phoneNumber: characterAttributes.phoneNumber }, "phone:smsOverview");
+    emitNet("database:smsThreadOverview", { phoneNumber: characterAttributes.phoneNumber }, "phone:smsOverview");
 });
 
 onNet("phone:smsOverview", overview => {
@@ -92,7 +92,7 @@ onNet("phone:smsOverview", overview => {
 RegisterNuiCallbackType('loadSMSMessages')
 on('__cfx_nui:loadSMSMessages', (data, cb) => {
     cb();
-    emitNet("database:smsMessages", GetPlayerServerId(PlayerId()), { phoneNumber: characterAttributes.phoneNumber, contactNumber: data.number }, "phone:smsMessages");
+    emitNet("database:smsMessages", { phoneNumber: characterAttributes.phoneNumber, contactNumber: data.number }, "phone:smsMessages");
 });
 
 onNet("phone:smsMessages", messages => {
@@ -108,25 +108,35 @@ on('__cfx_nui:elementFocus', (data, cb) => {
 RegisterNuiCallbackType('sendSMS')
 on('__cfx_nui:sendSMS', (data, cb) => {
     cb();
-    emitNet("database:sendSMS", GetPlayerServerId(PlayerId()), { phoneNumber: characterAttributes.phoneNumber, contactNumber: data.number, content: data.content }, "phone:sentSMS");
+    emitNet("database:sendSMS", { phoneNumber: characterAttributes.phoneNumber, contactNumber: data.number, content: data.content }, "phone:sentSMS");
 });
 
 onNet("phone:sentSMS", data => {
-    emitNet("database:smsMessages", GetPlayerServerId(PlayerId()), { phoneNumber: characterAttributes.phoneNumber, contactNumber: data.number }, "phone:smsMessages");
+    emitNet("database:smsMessages", { phoneNumber: characterAttributes.phoneNumber, contactNumber: data.number }, "phone:smsMessages");
 });
 
 
 let currentTaskStep;
 on("phone:task", task => {
     SendNuiMessage(JSON.stringify({ action: "task", task }));
-    for (let i = 0; i < task.steps.length; i++) {
-        let step = task.steps[i];
-        if (step.state === 1) {
-            if (currentTaskStep !== step.heading) {
-                currentTaskStep = step.heading;
-                SendNuiMessage(JSON.stringify({ action: "notification", notification: { title: currentTaskStep } }));
+    let newTaskStep;
+    if (task.complete) {
+        newTaskStep = "Task Complete!";
+    } else if (!task.in_progress) {
+        newTaskStep = "Task Cancelled.";
+    }
+    if (!newTaskStep) {
+        for (let i = 0; i < task.steps.length; i++) {
+            let step = task.steps[i];
+            if (step.state === 1) {
+                newTaskStep = step.heading;
+
+                break;
             }
-            break;
         }
+    }
+    if (currentTaskStep !== newTaskStep) {
+        currentTaskStep = newTaskStep;
+        SendNuiMessage(JSON.stringify({ action: "notification", notification: { title: currentTaskStep } }));
     }
 });

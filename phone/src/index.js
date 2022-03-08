@@ -367,7 +367,7 @@ class Phone extends React.Component {
             <div className="phone" style={{ bottom }}>
                 <div className="phone-screen">
                     {modal}
-                    <div className="notifications">
+                    <div className="notifications" style={{ height: `${this.state.notifications.length * 60}px` }}>
                         {notifications}
                     </div>
                     <div className="status-bar">

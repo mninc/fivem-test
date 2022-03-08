@@ -51,6 +51,13 @@ class Peek extends React.Component {
                         Start Boost
                     </p>
                 )
+            } else if (option === "tasks:collect-cash") {
+                buttons.push(
+                    <p id={option} onClick={() => this.selectOption(option)}>
+                        <i class="fas fa-money-bill-wave"></i>
+                        Collect Cash
+                    </p>
+                )
             }
 
         }
