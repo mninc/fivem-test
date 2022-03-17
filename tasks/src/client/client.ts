@@ -40,11 +40,11 @@ on("tasks:collect-cash", () => {
     cashToCollect = 0;
 });
 
-onNet("tasks:loaded-task", task => {
+onNet("tasks:loaded-task", (task: string) => {
     emit("phone:task", task);
     currentTask = task;
 });
-on('onResourceStart', resource => {
+on('onResourceStart', (resource: string) => {
     if (resource === "phone") {
         if (currentTask) {
             emit("phone:task", currentTask);

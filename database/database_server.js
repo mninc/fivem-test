@@ -2,6 +2,7 @@
 const mongoose = require("mongoose");
 
 const database = require('./database');
+const vehicleColours = require('./vehicle_colours');
 
 function docToJSON(doc) {
     return JSON.parse(JSON.stringify(doc));
@@ -517,7 +518,8 @@ async function loadTasksJSON(query) {
         if (task.task_type === "boost") {
             task.steps = [
                 {
-                    heading: "Find and steal the car"
+                    heading: "Find and steal the car",
+                    body: `You're looking for a ${vehicleColours[task.vehicle.colours.primary]} and ${vehicleColours[task.vehicle.colours.secondary]} ${task.vehicle.model}`
                 }, {
                     heading: "Take the car to the drop off spot"
                 }, {

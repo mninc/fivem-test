@@ -10,5 +10,14 @@ module.exports = mongoose.model('Task', {
     complete: Boolean,
 
     // boost
-    vehicle: Number,
+    vehicle: {
+        coords: [ Number ],
+        model: String,
+        netID: Number,
+        colours: {
+            primary: Number,
+            secondary: Number
+        },
+        blipID: Number
+    },
 });
