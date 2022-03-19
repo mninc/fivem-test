@@ -3,26 +3,6 @@ on('onResourceStart', resource => {
     SetNuiFocusKeepInput(true);
 });
 
-let f1Open = false;
-
-setTick(() => {
-    if (f1Open) {
-        DisableControlAction(0, 24, true);
-        DisableControlAction(0, 25, true);
-        DisableControlAction(0, 257, true);
-
-        // looking around
-        DisableControlAction(0, 1, true);
-        DisableControlAction(0, 2, true);
-        DisableControlAction(0, 4, true);
-        DisableControlAction(0, 6, true);
-        DisableControlAction(0, 270, true);
-        DisableControlAction(0, 271, true);
-        DisableControlAction(0, 272, true);
-        DisableControlAction(0, 273, true);
-    }
-});
-
 RegisterKeyMapping('f1', 'F1', 'keyboard', 'F1');
 RegisterCommand('f1', async () => {
     const menuItems = [
@@ -65,7 +45,7 @@ RegisterCommand('f1', async () => {
             }
         });
     }
-    f1Open = true;
+    emit("core:disableControlActions", "f1", { attack: true, look: true });
     SetCursorLocation(0.5, 0.5);
     SetNuiFocus(
         true, true
@@ -86,7 +66,7 @@ on('__cfx_nui:selectedItem', async (item, cb) => {
 RegisterNuiCallbackType('close')
 on('__cfx_nui:close', async (item, cb) => {
     cb();
-    f1Open = false;
+    emit("core:disableControlActions", "f1", { attack: false, look: false });
     SetNuiFocus(
         false, false
     );

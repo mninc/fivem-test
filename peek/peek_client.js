@@ -14,25 +14,10 @@ const peekablePeds = {};
 
 on("peek:registerPeekablePed", (entity, emitTo) => {
     peekablePeds[entity] = emitTo;
-    console.log(peekablePeds);
 });
 
 setTick(() => {
     if (peekOpen) {
-        DisableControlAction(0, 24, true);
-        DisableControlAction(0, 25, true);
-        DisableControlAction(0, 257, true);
-
-        // looking around
-        DisableControlAction(0, 1, true);
-        DisableControlAction(0, 2, true);
-        DisableControlAction(0, 4, true);
-        DisableControlAction(0, 6, true);
-        DisableControlAction(0, 270, true);
-        DisableControlAction(0, 271, true);
-        DisableControlAction(0, 272, true);
-        DisableControlAction(0, 273, true);
-
         if (updateIn === 0) {
             updateIn = 20;
             let data = { action: "peek", options: getOptions() };
@@ -50,6 +35,7 @@ RegisterCommand('+peek', async () => {
     let data = { action: "peek", options: getOptions() };
 
     peekOpen = true;
+    emit("core:disableControlActions", "peek", { attack: true, look: true });
     SetNuiFocus(
         true, true
     );
@@ -57,6 +43,7 @@ RegisterCommand('+peek', async () => {
 });
 RegisterCommand('-peek', async () => {
     peekOpen = false;
+    emit("core:disableControlActions", "peek", { attack: false, look: false });
     SetNuiFocus(
         false, false
     );
@@ -83,7 +70,6 @@ function getOptions() {
             }
         }
     }
-    console.log(options);
     return options;
 }
 
@@ -123,6 +109,7 @@ RegisterNuiCallbackType('selectedOption')
 on('__cfx_nui:selectedOption', async (data, cb) => {
     cb();
     peekOpen = false;
+    emit("core:disableControlActions", "peek", { attack: false, look: false });
     SetNuiFocus(
         false, false
     );

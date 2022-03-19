@@ -7,6 +7,7 @@ RegisterKeyMapping('phone', 'Phone', 'keyboard', 'p');
 RegisterCommand('phone', async () => {
     if (phoneOpen) {
         phoneOpen = false;
+        emit("core:disableControlActions", "phone", { attack: false, look: false });
         ExecuteCommand("e c");
         SetNuiFocus(
             false, false
@@ -14,29 +15,12 @@ RegisterCommand('phone', async () => {
         SendNuiMessage(JSON.stringify({ action: "close_phone" }));
     } else {
         phoneOpen = true;
+        emit("core:disableControlActions", "phone", { attack: true, look: true });
         ExecuteCommand("e phone");
         SetNuiFocus(
             true, true
         );
         SendNuiMessage(JSON.stringify({ action: "open_phone" }));
-    }
-});
-
-setTick(() => {
-    if (phoneOpen) {
-        DisableControlAction(0, 24, true);
-        DisableControlAction(0, 25, true);
-        DisableControlAction(0, 257, true);
-
-        // looking around
-        DisableControlAction(0, 1, true);
-        DisableControlAction(0, 2, true);
-        DisableControlAction(0, 4, true);
-        DisableControlAction(0, 6, true);
-        DisableControlAction(0, 270, true);
-        DisableControlAction(0, 271, true);
-        DisableControlAction(0, 272, true);
-        DisableControlAction(0, 273, true);
     }
 });
 
@@ -59,7 +43,6 @@ onNet("phone:processedContactsChange", () => {
 RegisterNuiCallbackType('loadContacts')
 on('__cfx_nui:loadContacts', (data, cb) => {
     cb();
-    console.log("loading contacts")
     emitNet("database:loadContacts", { phoneNumber: characterAttributes.phoneNumber }, "phone:contacts");
 });
 
@@ -73,9 +56,11 @@ on("core:newAttributes", newAttributes => {
 
 setInterval(sendTime, 2000);
 
+let initial = false;
 function sendTime() {
-    if (!phoneOpen) return;
+    if (initial && !phoneOpen) return;
 
+    initial = true;
     SendNuiMessage(JSON.stringify({ action: "time", time: { hours: GetClockHours(), minutes: GetClockMinutes() } }));
 }
 

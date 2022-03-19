@@ -6,6 +6,7 @@ let otherContainer: string;
 RegisterCommand('inventory', async () => {
     if (inventoryOpen) {
         inventoryOpen = false;
+        emit("core:disableControlActions", "inventory", { attack: false, look: false });
         SetNuiFocus(
             false, false
         );
@@ -18,6 +19,7 @@ RegisterCommand('inventory', async () => {
             emitNet('database:loadContainer', { type: otherContainer.split("-")[0], identifier: otherContainer }, 'inventory:loadedContainer');
         }
         inventoryOpen = true;
+        emit("core:disableControlActions", "inventory", { attack: true, look: true });
         SetNuiFocusKeepInput(true);
         SetNuiFocus(
             true, true
@@ -30,6 +32,7 @@ onNet('inventory:shop', async (shopInventory: Container) => {
     inventory.container = shopInventory;
     inventoryChange();
     inventoryOpen = true;
+    emit("core:disableControlActions", "inventory", { attack: true, look: true });
     SetNuiFocusKeepInput(true);
     SetNuiFocus(
         true, true
@@ -40,24 +43,6 @@ onNet('inventory:shop', async (shopInventory: Container) => {
 function inventoryChange() {
     SendNuiMessage(JSON.stringify({ action: "inventory", inventory }));
 }
-
-setTick(() => {
-    if (inventoryOpen) {
-        DisableControlAction(0, 24, true);
-        DisableControlAction(0, 25, true);
-        DisableControlAction(0, 257, true);
-
-        // looking around
-        DisableControlAction(0, 1, true);
-        DisableControlAction(0, 2, true);
-        DisableControlAction(0, 4, true);
-        DisableControlAction(0, 6, true);
-        DisableControlAction(0, 270, true);
-        DisableControlAction(0, 271, true);
-        DisableControlAction(0, 272, true);
-        DisableControlAction(0, 273, true);
-    }
-});
 
 on('onResourceStart', (resource: string) => {
     if (resource !== "inventory") return;
@@ -121,6 +106,7 @@ on('__cfx_nui:closeInventory', (_: any, cb: Function) => {
         false, false
     );
     inventoryOpen = false;
+    emit("core:disableControlActions", "inventory", { attack: false, look: false });
     cb();
 });
 
