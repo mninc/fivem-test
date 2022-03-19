@@ -17,7 +17,6 @@ window.addEventListener('message', (event) => {
             closeOnClick: true,
             menuItems: data.menuItems,
             onClick: function (item) {
-                console.log('You have clicked:', JSON.stringify(item));
                 fetch(`https://${GetParentResourceName()}/selectedItem`, {
                     method: 'POST',
                     body: JSON.stringify(item)

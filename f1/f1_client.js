@@ -55,7 +55,18 @@ RegisterCommand('f1', async () => {
             ]
         }
     ];
+    let vehicle = GetVehiclePedIsIn(PlayerPedId(), false);
+    if (vehicle) {
+        menuItems.push({
+            title: "Vehicle",
+            icon: "car",
+            action: {
+                type: "vehicle"
+            }
+        });
+    }
     f1Open = true;
+    SetCursorLocation(0.5, 0.5);
     SetNuiFocus(
         true, true
     );
@@ -67,6 +78,8 @@ on('__cfx_nui:selectedItem', async (item, cb) => {
     cb();
     if (item.action.type === "walk") {
         ExecuteCommand(`walk ${item.action.value}`);
+    } else if (item.action.type === "vehicle") {
+        emit("vehicle:openMenu");
     }
 });
 

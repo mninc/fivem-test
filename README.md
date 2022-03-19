@@ -3,3 +3,4 @@ Some FiveM resources that could be used to create an RP server with minimal depe
 ## Dependencies
 - [PolyZone](https://github.com/mkafrin/PolyZone)
 - [dpemotes](https://github.com/andristum/dpemotes)
+- [Radial Menu](https://github.com/axln/radial-menu-js)

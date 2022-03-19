@@ -5,8 +5,8 @@ setTick(() => {
     BlockWeaponWheelThisFrame();
 
     DisableControlAction(0, 37, true)
-    DisableControlAction(0, 199, true) 
-    
+    DisableControlAction(0, 199, true)
+
     const player = PlayerId();
     if (GetPlayerWantedLevel(player)) {
         SetPlayerWantedLevel(player, 0);
@@ -22,17 +22,19 @@ setTick(() => {
     }
     const ped = PlayerPedId();
     const vehicle = GetVehiclePedIsIn(ped);
+    let radarShouldShow = !!vehicle;
     if (vehicle) {
+        if (!GetIsVehicleEngineRunning(vehicle)) {
+            radarShouldShow = false;
+        }
         SetVehicleRadioEnabled(vehicle, false);
-        if (!currentRadarOn) {
-            DisplayRadar(true);
-            currentRadarOn = true;
-        }
-    } else {
-        if (currentRadarOn) {
-            DisplayRadar(false);
-            currentRadarOn = false;
-        }
+    }
+    if (radarShouldShow && !currentRadarOn) {
+        DisplayRadar(true);
+        currentRadarOn = true;
+    } else if (!radarShouldShow && currentRadarOn) {
+        DisplayRadar(false);
+        currentRadarOn = false;
     }
 });
 
