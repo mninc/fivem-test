@@ -5,4 +5,4 @@ author 'manic'
 description 'map icons'
 version '1.0.0'
 
-client_script 'map_icons_client.js'
+client_script 'dist/*.js'

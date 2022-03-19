@@ -278,7 +278,12 @@ async function createShopPed(coords: Coords, pedHash: string, emitTo: string) {
 }
 async function start() {
     await createShopPed([146.2488, -1058.7614, 29.1861, 178.5029], "cs_lazlow", "inventory:shop-bank-robbery");
+
+    // there are many more of these to add
     await createShopPed([24.4262, -1346.8271, 28.4970, 279.7303], "mp_m_shopkeep_01", "inventory:shop-24-7");
+    await createShopPed([-47.3015, -1758.6006, 28.4210, 59.2021], "mp_m_shopkeep_01", "inventory:shop-24-7");
+    await createShopPed([-706.1404, -914.4235, 18.2156, 93.6812], "mp_m_shopkeep_01", "inventory:shop-24-7");
+    await createShopPed([-1221.3215, -907.9657, 11.3264, 10.6162], "mp_m_shopkeep_01", "inventory:shop-24-7");
     await createShopPed([22.6427, -1105.4738, 28.7970, 164.6712], "s_m_y_blackops_01", "inventory:shop-ammunation");
 }
 start();

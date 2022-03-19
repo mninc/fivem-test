@@ -27,3 +27,4 @@ export interface CharacterAttributes {
     phoneNumber: number;
 }
 export type Coords = [number, number, number, number];
+export type Coords3 = [number, number, number];
