@@ -1,6 +1,7 @@
 let characterAttributes;
 
 setTick(() => {
+    SetPlayerHealthRechargeMultiplier(PlayerId(), 0.0);
     if (!characterAttributes) return;
     const changes = {};
     const ped = PlayerPedId();
@@ -48,4 +49,36 @@ RegisterCommand("cash", () => {
     SendNuiMessage(JSON.stringify({
         action: "show_cash"
     }));
+});
+
+on("player-attributes:use-consumable", (item, removeItem) => {
+    if (item.consumable.stat === "health") {
+        const ped = PlayerPedId();
+        let health = GetEntityHealth(ped);
+        if (health === 200) return;
+        ExecuteCommand("e pill");
+        emit(removeItem, item._id);
+
+        let healed = 0;
+        let interval = setInterval(() => {
+            if (healed > item.consumable.value) {
+                clearInterval(interval);
+                return;
+            }
+            healed++;
+            const ped = PlayerPedId();
+            let health = GetEntityHealth(ped);
+            health += 1;
+            if (health > 200) return;
+            SetEntityHealth(ped, health);
+        }, 5000 / item.consumable.value);
+    }
+});
+
+RegisterCommand("revive", () => {
+    console.log("reviving");
+    ResurrectPed(
+        PlayerPedId()
+    );
+    ClearPedTasksImmediately(PlayerPedId())
 });

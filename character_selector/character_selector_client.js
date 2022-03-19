@@ -92,8 +92,10 @@ function characterSelector() {
 }
 
 on('onClientGameTypeStart', () => {
-    exports.spawnmanager.setAutoSpawnCallback(characterSelector);
-    exports.spawnmanager.setAutoSpawn(false);
+    exports.spawnmanager.setAutoSpawnCallback(() => {
+        exports.spawnmanager.setAutoSpawn(false);
+        characterSelector();
+    });
 });
 
 RegisterCommand("switch", () => {

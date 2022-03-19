@@ -1,7 +1,4 @@
-on('onResourceStart', resource => {
-    if (resource !== "peek") return;
-    SetNuiFocusKeepInput(true);
-});
+SetNuiFocusKeepInput(true);
 
 let peekOpen = false;
 const models = {

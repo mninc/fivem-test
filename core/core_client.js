@@ -4,15 +4,20 @@ let characterAttributes = {
 const updateKeys = [ "cash", "health" ];
 let loaded = false;
 
-on("core:setAttributes", async (updates, justLoaded) => {
+async function setAttributes(updates, justLoaded) {
     if (justLoaded) loaded = true;
     if (!loaded) return; // could lose some changes
 
     let databaseUpdates = {};
     for (let i = 0; i < updateKeys.length; i++) {
         let key = updateKeys[i];
-        if (updates[key] !== undefined && updates[key] !== characterAttributes[key]) {
-            databaseUpdates[key] = updates[key];
+        let newValue = updates[key];
+        if (newValue !== undefined && newValue !== characterAttributes[key]) {
+            if (key === "health" && newValue > 200) {
+                newValue = 200;
+                updates[key] = newValue;
+            }
+            databaseUpdates[key] = newValue;
         }
     }
     
@@ -24,7 +29,9 @@ on("core:setAttributes", async (updates, justLoaded) => {
         characterAttributes[key] = updates[key];
     }
     emit("core:newAttributes", characterAttributes);
-});
+}
+
+on("core:setAttributes", setAttributes);
 on('onResourceStart', resource => {
     if (resource !== "core") {
         emit("core:newAttributes", characterAttributes);

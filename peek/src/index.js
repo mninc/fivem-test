@@ -37,7 +37,7 @@ class Peek extends React.Component {
                         Use ATM
                     </p>
                 )
-            } else if (option === "bank-robbery:ped") {
+            } else if (option === "inventory:shop-bank-robbery") {
                 buttons.push(
                     <p id={option} onClick={() => this.selectOption(option)}>
                         <i class="fas fa-piggy-bank"></i>
@@ -56,6 +56,20 @@ class Peek extends React.Component {
                     <p id={option} onClick={() => this.selectOption(option)}>
                         <i class="fas fa-money-bill-wave"></i>
                         Collect Cash
+                    </p>
+                )
+            } else if (option === "inventory:shop-24-7") {
+                buttons.push(
+                    <p id={option} onClick={() => this.selectOption(option)}>
+                        <i class="fas fa-shopping-basket"></i>
+                        Open Shop
+                    </p>
+                )
+            } else if (option === "inventory:shop-ammunation") {
+                buttons.push(
+                    <p id={option} onClick={() => this.selectOption(option)}>
+                        <i class="fas fa-raygun"></i>
+                        Purchase Weapons
                     </p>
                 )
             }

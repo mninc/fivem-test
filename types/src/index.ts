@@ -7,7 +7,7 @@ export interface Item extends ItemAttributes {
     icon: string;
     name: string;
     description: string;
-    type: "weapon" | "consumable" | "equipment";
+    type: "weapon" | "ammo" | "consumable" | "equipment";
     weapon_hash?: string;
     cost?: number;
 }

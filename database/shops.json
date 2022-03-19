@@ -7,5 +7,26 @@
                 "cost": 200
             }
         ]
+    },
+    {
+        "id": "24-7",
+        "items": [
+            {
+                "item_id": "medkit",
+                "cost": 150
+            }
+        ]
+    },
+    {
+        "id": "ammunation",
+        "items": [
+            {
+                "item_id": "weapon_pistol",
+                "cost": 1000
+            }, {
+                "item_id": "pistol_ammo",
+                "cost": 100
+            }
+        ]
     }
 ]

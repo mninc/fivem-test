@@ -7,19 +7,41 @@
         "type": "weapon",
         "weapon_hash": "weapon_pistol",
         "stackable": false
-    }, {
+    },
+    {
+        "item_id": "pistol_ammo",
+        "icon": "https://www.clker.com/cliparts/7/8/e/0/11949853511945824735ammo_can_ganson.svg.hi.png",
+        "name": "Pistol Ammo",
+        "description": "ammo",
+        "type": "ammo",
+        "stackable": true
+    },
+    {
         "item_id": "joint",
         "icon": "https://us.123rf.com/450wm/sabelskaya/sabelskaya1812/sabelskaya181200054/113631725-vector-weed-joint-cannabis-spliff-hash-smoking-cigarette-sketch-icon-unhealthy-smoking-drug-addicati.jpg?ver=6",
         "name": "Joint",
         "description": "Smoke",
         "type": "consumable",
         "stackable": true
-    }, {
+    },
+    {
         "item_id": "hacking_tool",
         "icon": "https://miro.medium.com/max/407/1*JhDDq1fheTDRUjveaX91aQ.png",
         "name": "Hacking Tool",
         "description": "Hack Legion Square Bank",
         "type": "equipment",
         "stackable": false
+    },
+    {
+        "item_id": "medkit",
+        "icon": "https://www.pinclipart.com/picdir/big/131-1310296_foreign-aid-cartoon-medkit-png-clipart.png",
+        "name": "Medical Kit",
+        "description": "Heals you",
+        "type": "consumable",
+        "stackable": true,
+        "consumable": {
+            "stat": "health",
+            "value": 50
+        }
     }
 ]

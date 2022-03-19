@@ -1,4 +1,4 @@
-import { Container, Inventory, CharacterAttributes, ItemAttributes, Item } from '../../../types/dist';
+import { Container, Inventory, CharacterAttributes, ItemAttributes, Item, Coords } from '../../../types/dist';
 
 RegisterKeyMapping('inventory', 'Inventory', 'keyboard', 'h');
 let inventoryOpen = false;
@@ -96,9 +96,10 @@ on("inventory:receiveItem", (item: ItemAttributes) => {
 onNet('inventory:newItem', async (item: Item) => {
     SendNuiMessage(JSON.stringify({ action: "showItem", item: { title: "Received 1x", icon: item.icon, name: item.name, _id: item._id } }));
 });
-on('inventory:removeItem', async (item: String) => {
+function removeItem(item: String) {
     emitNet('database:deleteItem', { item, container: { type: 'inventory', identifier: characterAttributes.cid.toString() } }, { itemRemoved: 'inventory:removedItem', container: 'inventory:loadedInventory' });
-});
+}
+on('inventory:removeItem', removeItem);
 onNet('inventory:removedItem', async (item: Item) => {
     SendNuiMessage(JSON.stringify({ action: "showItem", item: { title: "Removed 1x", icon: item.icon, name: item.name, _id: item._id } }));
 });
@@ -145,7 +146,7 @@ function wait(time: number) {
     });
 }
 
-let itemEquipped: null | string = null;
+let itemEquipped: null | Item = null;
 let currentAmmo: number = -1;
 let ammoCheckInterval: NodeJS.Timer;
 
@@ -158,7 +159,7 @@ async function useItem(item: Item) {
             GiveWeaponToPed(ped, item.weapon_hash, item.ammo, false, true);
             currentAmmo = item.ammo;
             SendNuiMessage(JSON.stringify({ action: "showItem", item: { title: "Equipped", icon: item.icon, name: item.name, _id: item._id } }));
-            itemEquipped = item.weapon_hash;
+            itemEquipped = item;
             ammoCheckInterval = setInterval(() => {
                 let newAmmo = GetAmmoInPedWeapon(ped, item.weapon_hash);
                 if (newAmmo !== currentAmmo) {
@@ -176,6 +177,17 @@ async function useItem(item: Item) {
     } else if (item.type === "equipment") {
         if (item.item_id === "hacking_tool") {
             emit("bank-robbery:use-tool", item._id, "inventory:removeItem");
+        }
+    } else if (item.type === "consumable") {
+        emit("player-attributes:use-consumable", item, "inventory:removeItem");
+    } else if (item.type === "ammo") {
+        if (!itemEquipped) return;
+        if (item.item_id === "pistol_ammo" && itemEquipped.item_id === "weapon_pistol") {
+            removeItem(item._id);
+            const ped = PlayerPedId();
+            let ammo = GetAmmoInPedWeapon(ped, itemEquipped.weapon_hash);
+            ammo += 50;
+            SetPedAmmo(ped, itemEquipped.weapon_hash, ammo);
         }
     }
 }
@@ -250,3 +262,33 @@ function getBin() {
     // not the best system. improvements coule be made:
     // get coords when it first loads in (always spawns in unmoved?), a check for a saved dumpster within a few units around instead of just rounding
 }
+
+let Delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+async function createShopPed(coords: Coords, pedHash: string, emitTo: string) {
+    RequestModel(pedHash);
+    while (!HasModelLoaded(pedHash)) {
+        await Delay(20);
+    }
+
+    const ped = CreatePed(0, pedHash, ...coords, false, false);
+    FreezeEntityPosition(ped, true);
+    SetEntityInvincible(ped, true);
+    SetBlockingOfNonTemporaryEvents(ped, true);
+    emit("peek:registerPeekablePed", ped, [emitTo]);
+}
+async function start() {
+    await createShopPed([146.2488, -1058.7614, 29.1861, 178.5029], "cs_lazlow", "inventory:shop-bank-robbery");
+    await createShopPed([24.4262, -1346.8271, 28.4970, 279.7303], "mp_m_shopkeep_01", "inventory:shop-24-7");
+    await createShopPed([22.6427, -1105.4738, 28.7970, 164.6712], "s_m_y_blackops_01", "inventory:shop-ammunation");
+}
+start();
+
+on("inventory:shop-bank-robbery", () => {
+    emitNet('database:loadShop', "bank-robbery-vendor", 'inventory:shop');
+});
+on("inventory:shop-24-7", () => {
+    emitNet('database:loadShop', "24-7", 'inventory:shop');
+});
+on("inventory:shop-ammunation", () => {
+    emitNet('database:loadShop', "ammunation", 'inventory:shop');
+});
