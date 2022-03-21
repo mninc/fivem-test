@@ -207,7 +207,7 @@ class Phone extends React.Component {
                         <div className="app" onClick={() => this.setPage(["contacts"])}><i class="fas fa-address-book"></i></div>
                     </TooltipHover>
                     <TooltipHover title="Information">
-                        <div className="app"><i class="fas fa-info-circle"></i></div>
+                        <div className="app" onClick={() => this.setPage(["info"])}><i class="fas fa-info-circle"></i></div>
                     </TooltipHover>
                     <TooltipHover title="Task">
                         <div className="app" onClick={() => this.setPage(["task"])}><i class="fas fa-tasks"></i></div>
@@ -326,6 +326,14 @@ class Phone extends React.Component {
                     {steps}
                 </div>
             )
+        } else if (this.state.page[0] === "info") {
+            return (
+                <div className='mid-section info'>
+                    <p>Citizen ID: {this.state.characterAttributes.cid}</p>
+                    <p>Phone number: {this.state.characterAttributes.phoneNumber}</p>
+                    <p>Cash: {this.state.characterAttributes.cash}</p>
+                </div>
+            )
         }
     }
 
@@ -420,5 +428,10 @@ window.addEventListener('message', (event) => {
         });
     } else if (data.action === "notification") {
         phone.incomingNotification(data.notification);
+    } else if (data.action === "character_attributes") {
+        phone.setState({ characterAttributes: data.characterAttributes });
     }
+});
+fetch(`https://${GetParentResourceName()}/ready`, {
+    method: 'POST'
 });

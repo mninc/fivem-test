@@ -52,6 +52,12 @@ onNet("phone:contacts", contacts => {
 
 on("core:newAttributes", newAttributes => {
     characterAttributes = newAttributes;
+    SendNuiMessage(JSON.stringify({ action: "character_attributes", characterAttributes }));
+});
+RegisterNuiCallbackType('ready');
+on('__cfx_nui:ready', async (data, cb) => {
+    cb();
+    SendNuiMessage(JSON.stringify({ action: "character_attributes", characterAttributes }));
 });
 
 setInterval(sendTime, 2000);
