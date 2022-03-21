@@ -49,6 +49,43 @@ function deletePeds() {
     spawnedPeds = [];
 }
 
+async function setPedOutfit(ped, outfit) {
+    if (!outfit) return;
+
+    // if it's not the player, assume the ped is correct since to update we need to create a new ped
+    if (ped === PlayerPedId() && !IsPedModel(ped, outfit.pedModel)) {
+        await getModel(outfit.pedModel);
+        SetPlayerModel(PlayerId(), outfit.pedModel);
+        SetModelAsNoLongerNeeded(outfit.pedModel);
+        ped = PlayerPedId();
+    }
+
+    for (let component = 0; component < 12; component++) {
+        SetPedComponentVariation(
+            ped,
+            component,
+            outfit.ped[component][0],
+            outfit.ped[component][1],
+            2
+        );
+    }
+    let props = [0, 1, 2, 6, 7];
+    for (let i = 0; i < props.length; i++) {
+        let prop = props[i];
+        if (outfit.pedProp[i][0] === -1) {
+            ClearPedProp(ped, prop);
+        } else {
+            SetPedPropIndex(
+                ped,
+                prop,
+                outfit.pedProp[i][0],
+                outfit.pedProp[i][1],
+                true
+            );
+        }
+    }
+}
+
 let characters;
 onNet('character_selector:characters', async (chars) => {
     characters = chars;
@@ -56,39 +93,13 @@ onNet('character_selector:characters', async (chars) => {
 
     for (let i = 0; i < characters.length && i < characterPositions.length; i++) {
         const character = characters[i];
-        await getModel(character.ped);
+        const outfit = character.currentOutfit;
+        await getModel(outfit.pedModel);
         const position = characterPositions[i];
-        const newPed = CreatePed(0, character.ped, position[0], position[1], position[2], position[3], false, false);
-        SetPedDefaultComponentVariation(newPed);
-        if (character.variations && character.variations.ped && character.variations.ped.length) {
-            let newPedVariations = character.variations;
-            for (let component = 0; component < 12; component++) {
-                SetPedComponentVariation(
-                    newPed,
-                    component,
-                    newPedVariations.ped[component][0],
-                    newPedVariations.ped[component][1],
-                    2
-                );
-            }
-            let props = [0, 1, 2, 6, 7];
-            for (let i = 0; i < props.length; i++) {
-                let prop = props[i];
-                if (newPedVariations.pedProp[i][0] === -1) {
-                    ClearPedProp(newPed, prop);
-                } else {
-                    SetPedPropIndex(
-                        newPed,
-                        prop,
-                        newPedVariations.pedProp[i][0],
-                        newPedVariations.pedProp[i][1],
-                        true
-                    );
-                }
-            }
-        }
+        const newPed = CreatePed(0, outfit.pedModel, position[0], position[1], position[2], position[3], false, false);
+        SetModelAsNoLongerNeeded(outfit.pedModel);
+        await setPedOutfit(newPed, outfit);
         spawnedPeds.push(newPed);
-        SetModelAsNoLongerNeeded(character.ped);
     }
 
     while (!ready) {
@@ -146,8 +157,6 @@ RegisterCommand("free", async () => {
     SetEntityInvincible(player, false);
     SetEntityCollision(player, true, true);
     FreezePedCameraRotation(player, false);
-    await getModel("ex_office_citymodel_01");
-    CreateObject("ex_office_citymodel_01", -2199.311767578125, 3343.322021484375, 48.78097152709961, 85.8018798828125, false, false);
 });
 
 RegisterNuiCallbackType('newCharacter')
@@ -166,15 +175,7 @@ on('__cfx_nui:newCharacter', async (data, cb) => {
     emit("core:disableControlActions", "character_selector", { attack: true, look: true });
 });
 
-RegisterNuiCallbackType('newCharacterPed')
-on('__cfx_nui:newCharacterPed', async (data, cb) => {
-    const player = PlayerId();
-    await getModel(data.ped);
-    SetPlayerModel(player, data.ped);
-    SetPedDefaultComponentVariation(player);
-    SetModelAsNoLongerNeeded(data.ped);
-
-    const ped = PlayerPedId();
+function loadVariationsNumbers(ped) {
     let variations = {
         ped: [],
         pedProp: []
@@ -197,46 +198,39 @@ on('__cfx_nui:newCharacterPed', async (data, cb) => {
         }
         variations.pedProp.push(textures);
     }
-    cb(variations);
+    return variations;
+}
+async function newCharacterPed(pedModel, cb) {
+    const player = PlayerId();
+    await getModel(pedModel);
+    SetPlayerModel(player, pedModel);
+    SetModelAsNoLongerNeeded(pedModel);
 
-    StartPlayerTeleport(player, -2199.311767578125, 3343.322021484375, 48.78097152709961, 85.8018798828125, true, true, true);
-    while (!UpdatePlayerTeleport(player)) {
-        await Delay(1);
-    }
-    SetGameplayCamRelativeHeading(180);
-});
+    cb(loadVariationsNumbers(PlayerPedId()));
 
-
-let variations = null;
-RegisterNuiCallbackType('updatedVariations');
-on('__cfx_nui:updatedVariations', async (data, cb) => {
-    cb();
-    variations = data.variations;
-    const ped = PlayerPedId();
-    for (let component = 0; component < 12; component++) {
-        SetPedComponentVariation(
-            ped,
-            component,
-            variations.ped[component][0],
-            variations.ped[component][1],
-            2
-        );
-    }
-    let props = [0, 1, 2, 6, 7];
-    for (let i = 0; i < props.length; i++) {
-        let prop = props[i];
-        if (variations.pedProp[i][0] === -1) {
-            ClearPedProp(ped, prop);
-        } else {
-            SetPedPropIndex(
-                ped,
-                prop,
-                variations.pedProp[i][0],
-                variations.pedProp[i][1],
-                true
-            );
+    if (!inClothingMenu) {
+        StartPlayerTeleport(player, -2199.311767578125, 3343.322021484375, 48.78097152709961, 85.8018798828125, true, true, true);
+        while (!UpdatePlayerTeleport(player)) {
+            await Delay(1);
         }
     }
+    SetGameplayCamRelativeHeading(180);
+}
+
+
+let variations = {};
+let inClothingMenu = false;
+RegisterNuiCallbackType('updatedVariations');
+on('__cfx_nui:updatedVariations', async (data, cb) => {
+    if (!data.variations.ped) { // indicates it's a ped switch
+        await newCharacterPed(data.variations.pedModel, cb);
+        variations = data.variations;
+        return;
+    } else {
+        cb();
+    }
+    variations = data.variations;
+    await setPedOutfit(PlayerPedId(), variations);
 });
 
 RegisterNuiCallbackType('ready');
@@ -253,8 +247,7 @@ on('__cfx_nui:finishNewCharacter', async (data, cb) => {
     cb();
     emitNet('database:createCharacter', {
         name: data.name,
-        ped: data.ped,
-        variations
+        outfit: variations
     });
 });
 
@@ -290,40 +283,7 @@ on('__cfx_nui:selectedCharacter', async (data, cb) => {
     cid = character.cid;
     emit("core:cid", cid);
     emitNet("database:characterSelected", cid);
-    await getModel(character.ped);
-    SetPlayerModel(player, character.ped);
-    SetModelAsNoLongerNeeded(character.ped);
-
-    const ped = PlayerPedId();
-    SetPedDefaultComponentVariation(ped);
-    if (character.variations && character.variations.ped && character.variations.ped.length) {
-        console.log("doing variations");
-        let newPedVariations = character.variations;
-        for (let component = 0; component < 12; component++) {
-            SetPedComponentVariation(
-                ped,
-                component,
-                newPedVariations.ped[component][0],
-                newPedVariations.ped[component][1],
-                2
-            );
-        }
-        let props = [0, 1, 2, 6, 7];
-        for (let i = 0; i < props.length; i++) {
-            let prop = props[i];
-            if (newPedVariations.pedProp[i][0] === -1) {
-                ClearPedProp(ped, prop);
-            } else {
-                SetPedPropIndex(
-                    ped,
-                    prop,
-                    newPedVariations.pedProp[i][0],
-                    newPedVariations.pedProp[i][1],
-                    true
-                );
-            }
-        }
-    }
+    await setPedOutfit(PlayerPedId(), character.currentOutfit);
 
     StartPlayerTeleport(player, data.location.x, data.location.y, data.location.z, 0, true, true, true);
     SetPlayerControl(PlayerId(), true);
@@ -339,4 +299,71 @@ on('onResourceStart', resource => {
     if (resource === "core") {
         emit("core:cid", cid);
     }
+});
+
+let characterAttributes = null;
+on("core:newAttributes", (newAttributes) => {
+    characterAttributes = newAttributes;
+});
+
+RegisterCommand("outfits", () => {
+    if (!characterAttributes) return;
+
+    for (let i = 0; i < characterAttributes.outfits.length; i++) {
+        console.log(i, characterAttributes.outfits[i].outfitName);
+    }
+});
+
+RegisterCommand("outfitsave", (source, args) => {
+    let name = args[0];
+    if (!name) return console.log("set a name");
+
+    characterAttributes.currentOutfit.outfitName = name;
+    characterAttributes.outfits.push(characterAttributes.currentOutfit);
+    emit("core:setAttributes", { outfits: characterAttributes.outfits });
+});
+RegisterCommand("outfitdel", (source, args) => {
+    let outfitIndex = parseInt(args[0]);
+    if (!characterAttributes.outfits[outfitIndex]) return console.log("invalid outfit");
+
+    characterAttributes.outfits.splice(outfitIndex, 1);
+    emit("core:setAttributes", { outfits: characterAttributes.outfits });
+});
+
+RegisterCommand("outfituse", async (source, args) => {
+    let outfitIndex = parseInt(args[0]);
+    if (!characterAttributes.outfits[outfitIndex]) return console.log("invalid outfit");
+    await setPedOutfit(PlayerPedId(), characterAttributes.outfits[outfitIndex]);
+
+    emit("core:setAttributes", { currentOutfit: characterAttributes.outfits[outfitIndex] });
+});
+
+RegisterCommand("clothing", () => {
+    SendNuiMessage(JSON.stringify({ action: "clothing", selectedVariations: characterAttributes.currentOutfit, variations: loadVariationsNumbers(PlayerPedId()) }));
+    SetNuiFocus(
+        true, true
+    );
+    emit("core:disableControlActions", "character_selector", { attack: true, look: true });
+    inClothingMenu = true;
+});
+
+RegisterNuiCallbackType('saveClothing')
+on('__cfx_nui:saveClothing', async (data, cb) => {
+    cb();
+    SetNuiFocus(
+        false, false
+    );
+    emit("core:disableControlActions", "character_selector", { attack: false, look: false });
+    emit("core:setAttributes", { currentOutfit: variations });
+    inClothingMenu = false;
+});
+RegisterNuiCallbackType('cancelClothing')
+on('__cfx_nui:cancelClothing', async (data, cb) => {
+    cb();
+    SetNuiFocus(
+        false, false
+    );
+    emit("core:disableControlActions", "character_selector", { attack: false, look: false });
+    await setPedOutfit(PlayerPedId(), characterAttributes.currentOutfit);
+    inClothingMenu = false;
 });

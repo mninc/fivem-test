@@ -304,14 +304,14 @@ onNet("database:createCharacter", async (characterData) => {
     let source = global.source;
     const character = new database.models.Character({
         steamid: getSteamid(source),
-        ped: characterData.ped,
         name: characterData.name,
         health: 200,
         created: new Date(),
         cid: nextCharacterID,
         cash: 5000,
         phoneNumber: parseInt(`415555${nextCharacterID}`),
-        variations: characterData.variations,
+        outfits: [],
+        currentOutfit: characterData.outfit,
     });
     nextCharacterID++;
     await character.save();

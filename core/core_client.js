@@ -1,7 +1,7 @@
 let characterAttributes = {
     cash: -1,
 };
-const updateKeys = ["cash", "health", "walk"];
+const updateKeys = ["cash", "health", "walk", "outfits", "currentOutfit"];
 let loaded = false;
 
 async function setAttributes(updates, justLoaded) {
@@ -34,6 +34,7 @@ async function setAttributes(updates, justLoaded) {
 on("core:setAttributes", setAttributes);
 on('onResourceStart', resource => {
     if (resource !== "core") {
+        console.log(characterAttributes);
         emit("core:newAttributes", characterAttributes);
     }
 });
@@ -43,12 +44,16 @@ on("core:cid", cid => {
 });
 
 onNet("core:characterFromDatabase", character => {
+    console.log(character);
     characterAttributes = {
         cid: character.cid,
         health: character.health,
         ped: character.ped,
         cash: character.cash,
         phoneNumber: character.phoneNumber,
+        walk: character.walk,
+        outfits: character.outfits,
+        currentOutfit: character.currentOutfit,
     };
     loaded = true;
     emit("core:newAttributes", characterAttributes);

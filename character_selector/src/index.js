@@ -22,13 +22,13 @@ class CharacterSelection extends React.Component {
                 pedProp: []
             },
             selectedVariations: {
+                pedModel: "",
                 ped: [],
                 pedProp: []
             }
         };
         this.characterCreation = {
-            name: "",
-            ped: "a_m_m_bevhills_01"
+            name: ""
         };
         this.characters = [];
     }
@@ -65,14 +65,13 @@ class CharacterSelection extends React.Component {
     }
 
     onPedChange(event) {
-        this.characterCreation.ped = event.target.value;
-        fetch(`https://${GetParentResourceName()}/newCharacterPed`, {
+        let newPedModel = event.target.value;
+        fetch(`https://${GetParentResourceName()}/updatedVariations`, {
             method: 'POST',
-            body: JSON.stringify({
-                ped: event.target.value
-            })
+            body: JSON.stringify({ variations: { pedModel: newPedModel } })
         }).then(resp => resp.json()).then(variations => {
             let selectedVariations = {
+                pedModel: newPedModel,
                 ped: [],
                 pedProp: []
             };
@@ -98,6 +97,16 @@ class CharacterSelection extends React.Component {
 
     newCharacter() {
         this.setMode("new_character");
+        this.setState({
+            selectedVariations: {
+                pedModel: "",
+                ped: [],
+                pedProp: []
+            }, variations: {
+                ped: [],
+                pedProp: []
+            }
+        });
         fetch(`https://${GetParentResourceName()}/newCharacter`, {
             method: 'POST'
         });
@@ -142,6 +151,19 @@ class CharacterSelection extends React.Component {
         });
     }
 
+    saveClothing() {
+        fetch(`https://${GetParentResourceName()}/saveClothing`, {
+            method: 'POST'
+        });
+        this.setVisible(false);
+    }
+    cancelClothing() {
+        fetch(`https://${GetParentResourceName()}/cancelClothing`, {
+            method: 'POST'
+        });
+        this.setVisible(false);
+    }
+
     render() {
         if (!this.state.visible) return null;
 
@@ -169,7 +191,7 @@ class CharacterSelection extends React.Component {
                     </ReactModal>
                 </div>
             );
-        } else if (this.state.mode === "new_character") {
+        } else if (this.state.mode === "new_character" || this.state.mode === "clothing") {
             let pedCustomisation = [];
             for (let componentIndex = 0; componentIndex < this.state.variations.ped.length; componentIndex++) {
                 let component = this.state.variations.ped[componentIndex]; // list of variations, each is a number of textures
@@ -186,12 +208,12 @@ class CharacterSelection extends React.Component {
                     this.sendUpdatedVariations();
                 };
                 pedCustomisation.push(
-                    <p style={{backgroundColor: "white" }}>
+                    <p style={{ backgroundColor: "white" }}>
                         This component:
                         {component.length} variations
-                        <input type="number" onChange={updateVariation} style={{width: "100px"}} placeholder="0" min="0" max={component.length - 1} />
+                        <input type="number" onChange={updateVariation} style={{ width: "100px" }} value={this.state.selectedVariations.ped[componentIndex][0]} min="0" max={component.length - 1} />
                         {component[this.state.selectedVariations.ped[componentIndex][0]]} textures
-                        <input type="number" onChange={updateTexture} style={{width: "100px"}} placeholder="0" min="0" max={component[this.state.selectedVariations.ped[componentIndex][0]] - 1} />
+                        <input type="number" onChange={updateTexture} style={{ width: "100px" }} value={this.state.selectedVariations.ped[componentIndex][1]} min="0" max={component[this.state.selectedVariations.ped[componentIndex][0]] - 1} />
                     </p>
                 )
             }
@@ -210,32 +232,44 @@ class CharacterSelection extends React.Component {
                     this.sendUpdatedVariations();
                 };
                 pedCustomisation.push(
-                    <p style={{backgroundColor: "white" }}>
+                    <p style={{ backgroundColor: "white" }}>
                         This prop:
                         {prop.length} variations
-                        <input type="number" onChange={updateVariation} style={{width: "100px"}} value={this.state.selectedVariations.pedProp[propIndex][0]} min="-1" max={prop.length - 1} />
+                        <input type="number" onChange={updateVariation} style={{ width: "100px" }} value={this.state.selectedVariations.pedProp[propIndex][0]} min="-1" max={prop.length - 1} />
                         {prop[this.state.selectedVariations.pedProp[propIndex][0]]} textures
-                        <input type="number" onChange={updateTexture} style={{width: "100px"}} value={this.state.selectedVariations.pedProp[propIndex][1]} min="0" max={prop[this.state.selectedVariations.pedProp[propIndex][0]] - 1} />
+                        <input type="number" onChange={updateTexture} style={{ width: "100px" }} value={this.state.selectedVariations.pedProp[propIndex][1]} min="0" max={prop[this.state.selectedVariations.pedProp[propIndex][0]] - 1} />
                     </p>
                 )
+            }
+            let rightMenu = [];
+            if (this.state.mode === "new_character") {
+                rightMenu.push(
+                    <p>Name: <input onChange={e => this.onNameChange(e)}></input></p>
+                );
+                rightMenu.push(
+                    <button onClick={() => this.finishCreation()}>Create Character</button>
+                );
+            } else if (this.state.mode === "clothing") {
+                rightMenu.push(
+                    <button onClick={() => this.saveClothing()}>Save</button>
+                );
+                rightMenu.push(
+                    <button onClick={() => this.cancelClothing()}>Cancel</button>
+                );
             }
             return (
                 <div id="char-creation">
                     <div id="ped-selection">
                         <select onChange={e => this.onPedChange(e)}>
-                            {Object.keys(PedModel).map(ped => <option value={ped} key={ped}>{ped}</option>)}
+                            {Object.keys(PedModel).map(ped => <option value={ped} key={ped} selected={this.state.selectedVariations.pedModel === ped ? "selected" : false}>{ped}</option>)}
                         </select>
                         {pedCustomisation}
                     </div>
                     <div id="char-attributes">
-                        <p>Name: <input onChange={e => this.onNameChange(e)}></input></p>
-                        <button onClick={() => this.finishCreation()}>Create Character</button>
+                        {rightMenu}
                     </div>
                 </div>
             )
-            // 153
-            // 294
-            // 1332
         } else if (this.state.mode === "select_spawn") {
             const buttons = Object.keys(spawnLocations).map(location => {
                 const styles = {
@@ -279,6 +313,13 @@ window.addEventListener('message', (event) => {
             selection.setCharacters(event.data.characters);
         }
         selection.setVisible(data.action === "enable_screen");
+    } else if (data.action === 'clothing') {
+        selection.setVisible(true);
+        selection.setState({
+            selectedVariations: data.selectedVariations,
+            variations: data.variations,
+        });
+        selection.setMode("clothing");
     }
 });
 fetch(`https://${GetParentResourceName()}/ready`, {

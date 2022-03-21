@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
 
+const outfit = {
+    outfitName: String,
+    pedModel: String,
+    ped: [[Number]],
+    pedProp: [[Number]],
+};
 module.exports = mongoose.model('Character', {
     steamid: String, // steamid of user who created the character
     playerServerId: Number, // server ID of the player. ideally only set when they're currently on this character
@@ -10,9 +16,7 @@ module.exports = mongoose.model('Character', {
     cid: Number,
     cash: Number,
     phoneNumber: Number,
-    variations: {
-        ped: [ [ Number ] ],
-        pedProp: [ [ Number ] ]
-    },
     walk: String,
+    outfits: [ outfit ],
+    currentOutfit: outfit,
 });
