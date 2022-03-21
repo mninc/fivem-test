@@ -58,7 +58,7 @@ div.character-boxes {
     display: flex;
 }
 div.character-box {
-    border: 1px solid black;
+    /*border: 1px solid black;*/
     height: 100%;
 }
 div.character-box:nth-child(1) {

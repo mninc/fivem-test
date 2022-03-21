@@ -1,6 +1,7 @@
 let inSelection = false;
 let id = 1;
 let ready = false;
+SetNuiFocusKeepInput(true);
 setTick(() => {
     if (inSelection) SetPlayerInvisibleLocally(PlayerId());
 });
@@ -15,27 +16,27 @@ const characterPositions = [
     [
         -2196.55517578125, // x
         3303.576904296875, // y
-        32.813819885253906, // z
+        31.813819885253906, // z
         207.68743896484375 // heading
     ], [
         -2194.346435546875,
         3303.952880859375,
-        32.81355667114258,
+        31.81355667114258,
         182.13352966308594
     ], [
         -2193.1279296875,
         3303.76708984375,
-        32.81337356567383,
+        31.81337356567383,
         168.4816436767578
     ], [
         -2191.49853515625,
         3303.349853515625,
-        32.81306076049805,
+        31.81306076049805,
         159.40924072265625
     ], [
         -2189.70556640625,
         3302.494873046875,
-        32.81269073486328,
+        31.81269073486328,
         143.53250122070312
     ]
 ];
@@ -59,6 +60,33 @@ onNet('character_selector:characters', async (chars) => {
         const position = characterPositions[i];
         const newPed = CreatePed(0, character.ped, position[0], position[1], position[2], position[3], false, false);
         SetPedDefaultComponentVariation(newPed);
+        if (character.variations && character.variations.ped && character.variations.ped.length) {
+            let newPedVariations = character.variations;
+            for (let component = 0; component < 12; component++) {
+                SetPedComponentVariation(
+                    newPed,
+                    component,
+                    newPedVariations.ped[component][0],
+                    newPedVariations.ped[component][1],
+                    2
+                );
+            }
+            let props = [0, 1, 2, 6, 7];
+            for (let i = 0; i < props.length; i++) {
+                let prop = props[i];
+                if (newPedVariations.pedProp[i][0] === -1) {
+                    ClearPedProp(newPed, prop);
+                } else {
+                    SetPedPropIndex(
+                        newPed,
+                        prop,
+                        newPedVariations.pedProp[i][0],
+                        newPedVariations.pedProp[i][1],
+                        true
+                    );
+                }
+            }
+        }
         spawnedPeds.push(newPed);
         SetModelAsNoLongerNeeded(character.ped);
     }
@@ -74,6 +102,7 @@ onNet('character_selector:characters', async (chars) => {
 });
 
 function characterSelector() {
+    emit("core:disableControlActions", "character_selector", { attack: false, look: false });
     emitNet('database:getCharacters', GetPlayerServerId(PlayerId()));
     exports.spawnmanager.spawnPlayer({
         x: -2193.1298828125,
@@ -132,21 +161,82 @@ on('__cfx_nui:newCharacter', async (data, cb) => {
         await Delay(1);
     }
     SetGameplayCamRelativeHeading(180);
+    SetPlayerControl(PlayerId(), true);
+    FreezeEntityPosition(player, false);
+    emit("core:disableControlActions", "character_selector", { attack: true, look: true });
 });
 
 RegisterNuiCallbackType('newCharacterPed')
 on('__cfx_nui:newCharacterPed', async (data, cb) => {
-    cb();
     const player = PlayerId();
     await getModel(data.ped);
     SetPlayerModel(player, data.ped);
     SetPedDefaultComponentVariation(player);
     SetModelAsNoLongerNeeded(data.ped);
+
+    const ped = PlayerPedId();
+    let variations = {
+        ped: [],
+        pedProp: []
+    };
+    for (let component = 0; component < 12; component++) {
+        let numberOfVariations = GetNumberOfPedDrawableVariations(ped, component);
+        let textures = [];
+        for (let variation = 0; variation < numberOfVariations; variation++) {
+            textures.push(GetNumberOfPedTextureVariations(ped, component, variation));
+        }
+        variations.ped.push(textures);
+    }
+    let props = [0, 1, 2, 6, 7];
+    for (let i = 0; i < props.length; i++) {
+        let prop = props[i];
+        let numberOfVariations = GetNumberOfPedPropDrawableVariations(ped, prop);
+        let textures = [];
+        for (let variation = 0; variation < numberOfVariations; variation++) {
+            textures.push(GetNumberOfPedPropTextureVariations(ped, prop, variation));
+        }
+        variations.pedProp.push(textures);
+    }
+    cb(variations);
+
     StartPlayerTeleport(player, -2199.311767578125, 3343.322021484375, 48.78097152709961, 85.8018798828125, true, true, true);
     while (!UpdatePlayerTeleport(player)) {
         await Delay(1);
     }
     SetGameplayCamRelativeHeading(180);
+});
+
+
+let variations = null;
+RegisterNuiCallbackType('updatedVariations');
+on('__cfx_nui:updatedVariations', async (data, cb) => {
+    cb();
+    variations = data.variations;
+    const ped = PlayerPedId();
+    for (let component = 0; component < 12; component++) {
+        SetPedComponentVariation(
+            ped,
+            component,
+            variations.ped[component][0],
+            variations.ped[component][1],
+            2
+        );
+    }
+    let props = [0, 1, 2, 6, 7];
+    for (let i = 0; i < props.length; i++) {
+        let prop = props[i];
+        if (variations.pedProp[i][0] === -1) {
+            ClearPedProp(ped, prop);
+        } else {
+            SetPedPropIndex(
+                ped,
+                prop,
+                variations.pedProp[i][0],
+                variations.pedProp[i][1],
+                true
+            );
+        }
+    }
 });
 
 RegisterNuiCallbackType('ready');
@@ -163,7 +253,8 @@ on('__cfx_nui:finishNewCharacter', async (data, cb) => {
     cb();
     emitNet('database:createCharacter', {
         name: data.name,
-        ped: data.ped
+        ped: data.ped,
+        variations
     });
 });
 
@@ -201,8 +292,39 @@ on('__cfx_nui:selectedCharacter', async (data, cb) => {
     emitNet("database:characterSelected", cid);
     await getModel(character.ped);
     SetPlayerModel(player, character.ped);
-    SetPedDefaultComponentVariation(player);
     SetModelAsNoLongerNeeded(character.ped);
+
+    const ped = PlayerPedId();
+    SetPedDefaultComponentVariation(ped);
+    if (character.variations && character.variations.ped && character.variations.ped.length) {
+        console.log("doing variations");
+        let newPedVariations = character.variations;
+        for (let component = 0; component < 12; component++) {
+            SetPedComponentVariation(
+                ped,
+                component,
+                newPedVariations.ped[component][0],
+                newPedVariations.ped[component][1],
+                2
+            );
+        }
+        let props = [0, 1, 2, 6, 7];
+        for (let i = 0; i < props.length; i++) {
+            let prop = props[i];
+            if (newPedVariations.pedProp[i][0] === -1) {
+                ClearPedProp(ped, prop);
+            } else {
+                SetPedPropIndex(
+                    ped,
+                    prop,
+                    newPedVariations.pedProp[i][0],
+                    newPedVariations.pedProp[i][1],
+                    true
+                );
+            }
+        }
+    }
+
     StartPlayerTeleport(player, data.location.x, data.location.y, data.location.z, 0, true, true, true);
     SetPlayerControl(PlayerId(), true);
     FreezeEntityPosition(player, false);

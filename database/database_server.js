@@ -311,6 +311,7 @@ onNet("database:createCharacter", async (characterData) => {
         cid: nextCharacterID,
         cash: 5000,
         phoneNumber: parseInt(`415555${nextCharacterID}`),
+        variations: characterData.variations,
     });
     nextCharacterID++;
     await character.save();

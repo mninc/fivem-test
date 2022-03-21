@@ -17,6 +17,14 @@ class CharacterSelection extends React.Component {
             mode: "selection",
             selectedCharacter: 0,
             showDeleteModal: false,
+            variations: {
+                ped: [],
+                pedProp: []
+            },
+            selectedVariations: {
+                ped: [],
+                pedProp: []
+            }
         };
         this.characterCreation = {
             name: "",
@@ -63,6 +71,19 @@ class CharacterSelection extends React.Component {
             body: JSON.stringify({
                 ped: event.target.value
             })
+        }).then(resp => resp.json()).then(variations => {
+            let selectedVariations = {
+                ped: [],
+                pedProp: []
+            };
+            for (let componentIndex = 0; componentIndex < variations.ped.length; componentIndex++) {
+                selectedVariations.ped.push([0, 0]);
+            }
+            for (let propIndex = 0; propIndex < variations.pedProp.length; propIndex++) {
+                selectedVariations.pedProp.push([-1, 0]);
+            }
+            this.setState({ variations, selectedVariations });
+            this.sendUpdatedVariations();
         });
     }
     onNameChange(event) {
@@ -114,6 +135,13 @@ class CharacterSelection extends React.Component {
         });
     }
 
+    sendUpdatedVariations() {
+        fetch(`https://${GetParentResourceName()}/updatedVariations`, {
+            method: 'POST',
+            body: JSON.stringify({ variations: this.state.selectedVariations })
+        });
+    }
+
     render() {
         if (!this.state.visible) return null;
 
@@ -142,12 +170,62 @@ class CharacterSelection extends React.Component {
                 </div>
             );
         } else if (this.state.mode === "new_character") {
+            let pedCustomisation = [];
+            for (let componentIndex = 0; componentIndex < this.state.variations.ped.length; componentIndex++) {
+                let component = this.state.variations.ped[componentIndex]; // list of variations, each is a number of textures
+                let updateVariation = e => {
+                    let newVariation = parseInt(e.target.value);
+                    this.state.selectedVariations.ped[componentIndex] = [newVariation, 0];
+                    this.setState({ selectedVariations: this.state.selectedVariations });
+                    this.sendUpdatedVariations();
+                };
+                let updateTexture = e => {
+                    let newTexture = parseInt(e.target.value);
+                    this.state.selectedVariations.ped[componentIndex][1] = newTexture;
+                    this.setState({ selectedVariations: this.state.selectedVariations });
+                    this.sendUpdatedVariations();
+                };
+                pedCustomisation.push(
+                    <p style={{backgroundColor: "white" }}>
+                        This component:
+                        {component.length} variations
+                        <input type="number" onChange={updateVariation} style={{width: "100px"}} placeholder="0" min="0" max={component.length - 1} />
+                        {component[this.state.selectedVariations.ped[componentIndex][0]]} textures
+                        <input type="number" onChange={updateTexture} style={{width: "100px"}} placeholder="0" min="0" max={component[this.state.selectedVariations.ped[componentIndex][0]] - 1} />
+                    </p>
+                )
+            }
+            for (let propIndex = 0; propIndex < this.state.variations.pedProp.length; propIndex++) {
+                let prop = this.state.variations.pedProp[propIndex]; // list of variations, each is a number of textures
+                let updateVariation = e => {
+                    let newVariation = parseInt(e.target.value);
+                    this.state.selectedVariations.pedProp[propIndex] = [newVariation, 0];
+                    this.setState({ selectedVariations: this.state.selectedVariations });
+                    this.sendUpdatedVariations();
+                };
+                let updateTexture = e => {
+                    let newTexture = parseInt(e.target.value);
+                    this.state.selectedVariations.pedProp[propIndex][1] = newTexture;
+                    this.setState({ selectedVariations: this.state.selectedVariations });
+                    this.sendUpdatedVariations();
+                };
+                pedCustomisation.push(
+                    <p style={{backgroundColor: "white" }}>
+                        This prop:
+                        {prop.length} variations
+                        <input type="number" onChange={updateVariation} style={{width: "100px"}} value={this.state.selectedVariations.pedProp[propIndex][0]} min="-1" max={prop.length - 1} />
+                        {prop[this.state.selectedVariations.pedProp[propIndex][0]]} textures
+                        <input type="number" onChange={updateTexture} style={{width: "100px"}} value={this.state.selectedVariations.pedProp[propIndex][1]} min="0" max={prop[this.state.selectedVariations.pedProp[propIndex][0]] - 1} />
+                    </p>
+                )
+            }
             return (
                 <div id="char-creation">
                     <div id="ped-selection">
                         <select onChange={e => this.onPedChange(e)}>
                             {Object.keys(PedModel).map(ped => <option value={ped} key={ped}>{ped}</option>)}
                         </select>
+                        {pedCustomisation}
                     </div>
                     <div id="char-attributes">
                         <p>Name: <input onChange={e => this.onNameChange(e)}></input></p>
@@ -195,7 +273,6 @@ const selection = ReactDOM.render(
 
 console.log("listener set up");
 window.addEventListener('message', (event) => {
-    console.log("on event", event.data);
     let data = event.data;
     if (data.action === 'enable_screen' || data.action === "disable_screen") {
         if (data.action === "enable_screen") {

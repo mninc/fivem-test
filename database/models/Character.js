@@ -10,4 +10,8 @@ module.exports = mongoose.model('Character', {
     cid: Number,
     cash: Number,
     phoneNumber: Number,
+    variations: {
+        ped: [ [ Number ] ],
+        pedProp: [ [ Number ] ]
+    },
 });
