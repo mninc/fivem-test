@@ -1,7 +1,7 @@
 let characterAttributes = {
     cash: -1,
 };
-const updateKeys = ["cash", "health"];
+const updateKeys = ["cash", "health", "walk"];
 let loaded = false;
 
 async function setAttributes(updates, justLoaded) {

@@ -332,6 +332,7 @@ on('__cfx_nui:selectedCharacter', async (data, cb) => {
     SetEntityCollision(player, true, true);
     FreezePedCameraRotation(player, false);
     SetEntityHealth(PlayerPedId(), character.health);
+    if (character.walk) ExecuteCommand(`walk ${character.walk}`);
 });
 
 on('onResourceStart', resource => {

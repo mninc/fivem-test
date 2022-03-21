@@ -14,4 +14,5 @@ module.exports = mongoose.model('Character', {
         ped: [ [ Number ] ],
         pedProp: [ [ Number ] ]
     },
+    walk: String,
 });
