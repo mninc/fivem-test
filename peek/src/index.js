@@ -72,6 +72,13 @@ class Peek extends React.Component {
                         Purchase Weapons
                     </p>
                 )
+            } else if (option === "vehicle:rental-menu") {
+                buttons.push(
+                    <p id={option} onClick={() => this.selectOption(option)}>
+                        <i class="fas fa-car"></i>
+                        Rent Vehicle
+                    </p>
+                )
             }
 
         }
