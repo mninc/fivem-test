@@ -34,7 +34,6 @@ async function setAttributes(updates, justLoaded) {
 on("core:setAttributes", setAttributes);
 on('onResourceStart', resource => {
     if (resource !== "core") {
-        console.log(characterAttributes);
         emit("core:newAttributes", characterAttributes);
     }
 });
@@ -44,7 +43,6 @@ on("core:cid", cid => {
 });
 
 onNet("core:characterFromDatabase", character => {
-    console.log(character);
     characterAttributes = {
         cid: character.cid,
         health: character.health,
