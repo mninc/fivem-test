@@ -77,6 +77,14 @@ class Phone extends React.Component {
         });
     }
 
+    closePhone() {
+        phone.setState({ modal: null });
+        phone.pullDown();
+        fetch(`https://${GetParentResourceName()}/close`, {
+            method: 'POST'
+        });
+    }
+
     setPage(pages) {
         this.setState({
             page: pages
@@ -434,4 +442,10 @@ window.addEventListener('message', (event) => {
 });
 fetch(`https://${GetParentResourceName()}/ready`, {
     method: 'POST'
+});
+
+window.addEventListener("keydown", e => {
+    if (e.code === "Escape") {
+        phone.closePhone();
+    }
 });

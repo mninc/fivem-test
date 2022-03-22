@@ -320,3 +320,13 @@ window.addEventListener('message', (event) => {
         inventory.showItem(data.item);
     }
 });
+
+window.addEventListener("keydown", e => {
+    if (e.code === "Escape") {
+        fetch(`https://${GetParentResourceName()}/closeInventory`, {
+            method: 'POST'
+        });
+        inventory.sendUpdatedInventory();
+        inventory.setState({ visible: false });
+    }
+});

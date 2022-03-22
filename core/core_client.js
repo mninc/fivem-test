@@ -39,6 +39,14 @@ on('onResourceStart', resource => {
 });
 
 on("core:cid", cid => {
+    if (!cid) {
+        characterAttributes = {
+            cid: null
+        };
+        loaded = false;
+        emit("core:newAttributes", characterAttributes);
+        return;
+    }
     emitNet("database:getCharacter", cid, "core:characterFromDatabase");
 });
 
@@ -73,11 +81,15 @@ setTick(() => {
         DisableControlAction(0, 272, true);
         DisableControlAction(0, 273, true);
     }
+    if (finalDisable.escape) {
+        DisableControlAction(0, 200, true);
+    }
 });
 
 let finalDisable = {
     attack: false,
-    look: false
+    look: false,
+    escape: false,
 }
 let disablePerResource = {};
 on("core:disableControlActions", (resource, disable) => {
@@ -91,6 +103,12 @@ function computeFinalDisable() {
             if (!disablePerResource.hasOwnProperty(resource)) continue;
             if (disablePerResource[resource][key]) value = true;
         }
-        finalDisable[key] = value;
+        if (key === "escape") { // pause menu will still open if you're still holding it when we stop disabling it
+            setTimeout(() => {
+                finalDisable[key] = value;
+            }, 1000);
+        } else {
+            finalDisable[key] = value;
+        }
     }
 }

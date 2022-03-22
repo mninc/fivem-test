@@ -135,3 +135,8 @@ window.addEventListener('message', (event) => {
         });
     }
 });
+window.addEventListener("keydown", e => {
+    if (e.code === "Escape") {
+        contextMenu.close();
+    }
+});

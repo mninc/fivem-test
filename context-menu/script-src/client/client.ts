@@ -6,7 +6,7 @@ interface MenuItem {
 }
 
 on("context-menu:open-menu", (menuItems: MenuItem[]) => {
-    emit("core:disableControlActions", "context-menu", { attack: true, look: true });
+    emit("core:disableControlActions", "context-menu", { attack: true, look: true, escape: true });
     SetNuiFocus(
         true, true
     );
@@ -18,7 +18,7 @@ on('__cfx_nui:close', (_: any, cb: Function) => {
     SetNuiFocus(
         false, false
     );
-    emit("core:disableControlActions", "context-menu", { attack: false, look: false });
+    emit("core:disableControlActions", "context-menu", { attack: false, look: false, escape: false });
     cb();
 });
 

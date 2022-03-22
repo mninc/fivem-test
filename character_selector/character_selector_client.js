@@ -112,7 +112,10 @@ onNet('character_selector:characters', async (chars) => {
     );
 });
 
+let cid;
 function characterSelector() {
+    cid = null;
+    emit("core:cid", cid);
     emit("core:disableControlActions", "character_selector", { attack: false, look: false });
     emitNet('database:getCharacters', GetPlayerServerId(PlayerId()));
     exports.spawnmanager.spawnPlayer({
@@ -267,7 +270,6 @@ onNet('character_selector:deletedCharacter', () => {
     characterSelector();
 });
 
-let cid;
 RegisterNuiCallbackType('selectedCharacter');
 on('__cfx_nui:selectedCharacter', async (data, cb) => {
     cb();
@@ -393,6 +395,7 @@ on('__cfx_nui:saveClothing', async (data, cb) => {
     emit("core:setAttributes", { currentOutfit: variations });
     inClothingMenu = false;
 });
+
 RegisterNuiCallbackType('cancelClothing')
 on('__cfx_nui:cancelClothing', async (data, cb) => {
     cb();

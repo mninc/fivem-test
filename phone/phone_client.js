@@ -4,24 +4,36 @@ let characterAttributes;
 SetNuiFocusKeepInput(true);
 
 RegisterKeyMapping('phone', 'Phone', 'keyboard', 'p');
-RegisterCommand('phone', async () => {
+function phoneToggle(fromPhone) {
+    if (IsPauseMenuActive() || !characterAttributes || !characterAttributes.cid) return;
+
     if (phoneOpen) {
         phoneOpen = false;
-        emit("core:disableControlActions", "phone", { attack: false, look: false });
+        emit("core:disableControlActions", "phone", { attack: false, look: false, escape: false });
         ExecuteCommand("e c");
         SetNuiFocus(
             false, false
         );
-        SendNuiMessage(JSON.stringify({ action: "close_phone" }));
+        if (!fromPhone) {
+            SendNuiMessage(JSON.stringify({ action: "close_phone" }));
+        }
     } else {
         phoneOpen = true;
-        emit("core:disableControlActions", "phone", { attack: true, look: true });
+        emit("core:disableControlActions", "phone", { attack: true, look: true, escape: true });
         ExecuteCommand("e phone");
         SetNuiFocus(
             true, true
         );
-        SendNuiMessage(JSON.stringify({ action: "open_phone" }));
+        if (!fromPhone) {
+            SendNuiMessage(JSON.stringify({ action: "open_phone" }));
+        }
     }
+}
+RegisterCommand('phone', phoneToggle);
+RegisterNuiCallbackType('close')
+on('__cfx_nui:close', (data, cb) => {
+    cb();
+    phoneToggle(true);
 });
 
 RegisterNuiCallbackType('addContact')

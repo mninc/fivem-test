@@ -4,9 +4,11 @@ RegisterKeyMapping('inventory', 'Inventory', 'keyboard', 'h');
 let inventoryOpen = false;
 let otherContainer: string;
 RegisterCommand('inventory', async () => {
+    if (IsPauseMenuActive() || !characterAttributes || !characterAttributes.cid) return;
+
     if (inventoryOpen) {
         inventoryOpen = false;
-        emit("core:disableControlActions", "inventory", { attack: false, look: false });
+        emit("core:disableControlActions", "inventory", { attack: false, look: false, escape: false });
         SetNuiFocus(
             false, false
         );
@@ -19,7 +21,7 @@ RegisterCommand('inventory', async () => {
             emitNet('database:loadContainer', { type: otherContainer.split("-")[0], identifier: otherContainer }, 'inventory:loadedContainer');
         }
         inventoryOpen = true;
-        emit("core:disableControlActions", "inventory", { attack: true, look: true });
+        emit("core:disableControlActions", "inventory", { attack: true, look: true, escape: true });
         SetNuiFocusKeepInput(true);
         SetNuiFocus(
             true, true
@@ -32,7 +34,7 @@ onNet('inventory:shop', async (shopInventory: Container) => {
     inventory.container = shopInventory;
     inventoryChange();
     inventoryOpen = true;
-    emit("core:disableControlActions", "inventory", { attack: true, look: true });
+    emit("core:disableControlActions", "inventory", { attack: true, look: true, escape: true });
     SetNuiFocusKeepInput(true);
     SetNuiFocus(
         true, true
@@ -68,7 +70,7 @@ onNet('inventory:loadedInventory', async (characterInventory: Container) => {
 
 let characterAttributes: CharacterAttributes = null;
 on("core:newAttributes", (newAttributes: CharacterAttributes) => {
-    if (characterAttributes === null || characterAttributes.cid !== newAttributes.cid) {
+    if (newAttributes.cid && (characterAttributes === null || characterAttributes.cid !== newAttributes.cid)) {
         inventory.character = [];
         emitNet('database:loadContainer', { type: 'inventory', identifier: newAttributes.cid.toString() }, 'inventory:loadedInventory');
     }
@@ -106,7 +108,7 @@ on('__cfx_nui:closeInventory', (_: any, cb: Function) => {
         false, false
     );
     inventoryOpen = false;
-    emit("core:disableControlActions", "inventory", { attack: false, look: false });
+    emit("core:disableControlActions", "inventory", { attack: false, look: false, escape: false });
     cb();
 });
 
@@ -188,6 +190,7 @@ on('__cfx_nui:useItem', async (data: { item: Item }, cb: Function) => {
 });
 
 RegisterCommand('invuse', async (source: number, args: string[]) => {
+    if (IsPauseMenuActive() || !characterAttributes || !characterAttributes.cid) return;
     let slot = parseInt(args[0]);
     if (!slot) return;
     slot -= 1;
