@@ -85,6 +85,10 @@ div.character-box:nth-child(5) {
 #ped-selection {
     padding-right: 50vw;
 }
+#ped-selection > p {
+    margin: 0;
+}
+
 select {
     margin-top: 30px;
     width: 20vw;

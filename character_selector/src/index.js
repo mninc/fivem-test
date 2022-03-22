@@ -6,6 +6,8 @@ import { spawnLocations } from './spawn_locations';
 import ReactModal from 'react-modal';
 
 const map = (value, x1, y1, x2, y2) => (value - x1) * (y2 - x2) / (y1 - x1) + x2;
+const components = ["Face", "Mask", "Hair", "Torso", "Leg", "Parachute/bag", "Shoes", "Accessories", "Undershirt", "Kevlar", "Badge", "Torso 2"];
+const props = ["Hat", "Glasses", "Earpiece", "Watch", "Bracelet"];
 
 ReactModal.setAppElement('#root');
 
@@ -209,7 +211,7 @@ class CharacterSelection extends React.Component {
                 };
                 pedCustomisation.push(
                     <p style={{ backgroundColor: "white" }}>
-                        This component:
+                        {components[componentIndex]}:
                         {component.length} variations
                         <input type="number" onChange={updateVariation} style={{ width: "100px" }} value={this.state.selectedVariations.ped[componentIndex][0]} min="0" max={component.length - 1} />
                         {component[this.state.selectedVariations.ped[componentIndex][0]]} textures
@@ -233,7 +235,7 @@ class CharacterSelection extends React.Component {
                 };
                 pedCustomisation.push(
                     <p style={{ backgroundColor: "white" }}>
-                        This prop:
+                        {props[propIndex]}:
                         {prop.length} variations
                         <input type="number" onChange={updateVariation} style={{ width: "100px" }} value={this.state.selectedVariations.pedProp[propIndex][0]} min="-1" max={prop.length - 1} />
                         {prop[this.state.selectedVariations.pedProp[propIndex][0]]} textures
@@ -260,9 +262,12 @@ class CharacterSelection extends React.Component {
             return (
                 <div id="char-creation">
                     <div id="ped-selection">
-                        <select onChange={e => this.onPedChange(e)}>
-                            {Object.keys(PedModel).map(ped => <option value={ped} key={ped} selected={this.state.selectedVariations.pedModel === ped ? "selected" : false}>{ped}</option>)}
-                        </select>
+                        <p>
+                            Ped:
+                            <select onChange={e => this.onPedChange(e)}>
+                                {Object.keys(PedModel).map(ped => <option value={ped} key={ped} selected={this.state.selectedVariations.pedModel === ped ? "selected" : false}>{ped}</option>)}
+                            </select>
+                        </p>
                         {pedCustomisation}
                     </div>
                     <div id="char-attributes">

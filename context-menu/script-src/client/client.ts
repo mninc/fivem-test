@@ -28,4 +28,9 @@ on('__cfx_nui:action', (action: any[], cb: Function) => {
     emit(action.shift(), ...action);
 });
 
+RegisterNuiCallbackType('elementFocus')
+on('__cfx_nui:elementFocus', (data, cb) => {
+    cb();
+    SetNuiFocusKeepInput(!data.focus);
+});
 SetNuiFocusKeepInput(true);

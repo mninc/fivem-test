@@ -7,12 +7,12 @@ body {
 #root {
     height: 100vh;
 }
-#root, .contextMenu {
+#root, .contextMenu, .textInput {
     display: flex;
     align-items: center;
     justify-content: center;
 }
-.contextMenu {
+.contextMenu, .textInput {
     flex-direction: column;
 }
 p {
@@ -30,4 +30,24 @@ p {
     height: 75px;
     font-family: sans-serif;
     cursor: pointer;
+}
+
+.textInput {
+    background: rgb(105, 105, 250);
+    border-radius: 5px;
+    padding: 5px;
+    color: white;
+    font-size: 30px;
+    margin: 5px;
+    width: 400px;
+    height: 75px;
+    font-family: sans-serif;
+    cursor: pointer;
+}
+
+.textInput input {
+    font-size: 20px;
+    padding: 3px;
+    border-radius: 5px;
+    border: none;
 }

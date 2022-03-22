@@ -309,33 +309,69 @@ on("core:newAttributes", (newAttributes) => {
 RegisterCommand("outfits", () => {
     if (!characterAttributes) return;
 
-    for (let i = 0; i < characterAttributes.outfits.length; i++) {
-        console.log(i, characterAttributes.outfits[i].outfitName);
+    let outfits = characterAttributes.outfits;
+    let menuItems = [];
+    for (let i = 0; i < outfits.length; i++) {
+        let outfit = outfits[i];
+        menuItems.push({
+            title: `${i} | ${outfit.outfitName}`,
+            children: [
+                {
+                    title: "Use Outfit",
+                    action: ["character_selector:use-outfit", i]
+                },
+                {
+                    title: "Delete Outfit",
+                    action: ["character_selector:delete-outfit", i]
+                }
+            ]
+        });
     }
+    emit("context-menu:open-menu", [
+        {
+            title: "Outfits"
+        },
+        ...menuItems,
+        {
+            title: "Save current outfit",
+            textInput: "Outfit Name",
+            action: ["character_selector:save-outfit"]
+        }
+    ]);
 });
 
-RegisterCommand("outfitsave", (source, args) => {
-    let name = args[0];
+function deleteOutfit(outfitIndex) {
+    if (!characterAttributes.outfits[outfitIndex]) return console.log("invalid outfit");
+
+    characterAttributes.outfits.splice(outfitIndex, 1);
+    emit("core:setAttributes", { outfits: characterAttributes.outfits });
+}
+on("character_selector:delete-outfit", deleteOutfit);
+RegisterCommand("outfitdel", (source, args) => {
+    deleteOutfit(parseInt(args[0]));
+});
+
+async function useOutfit(outfitIndex) {
+    if (!characterAttributes.outfits[outfitIndex]) return console.log("invalid outfit");
+    await setPedOutfit(PlayerPedId(), characterAttributes.outfits[outfitIndex]);
+
+    emit("core:setAttributes", { currentOutfit: characterAttributes.outfits[outfitIndex] });
+}
+on("character_selector:use-outfit", useOutfit);
+RegisterCommand("outfituse", async (source, args) => {
+    useOutfit(parseInt(args[0]));
+});
+
+function saveOutfit(name) {
     if (!name) return console.log("set a name");
 
     characterAttributes.currentOutfit.outfitName = name;
     characterAttributes.outfits.push(characterAttributes.currentOutfit);
     emit("core:setAttributes", { outfits: characterAttributes.outfits });
-});
-RegisterCommand("outfitdel", (source, args) => {
-    let outfitIndex = parseInt(args[0]);
-    if (!characterAttributes.outfits[outfitIndex]) return console.log("invalid outfit");
-
-    characterAttributes.outfits.splice(outfitIndex, 1);
-    emit("core:setAttributes", { outfits: characterAttributes.outfits });
-});
-
-RegisterCommand("outfituse", async (source, args) => {
-    let outfitIndex = parseInt(args[0]);
-    if (!characterAttributes.outfits[outfitIndex]) return console.log("invalid outfit");
-    await setPedOutfit(PlayerPedId(), characterAttributes.outfits[outfitIndex]);
-
-    emit("core:setAttributes", { currentOutfit: characterAttributes.outfits[outfitIndex] });
+}
+on("character_selector:save-outfit", saveOutfit);
+RegisterCommand("outfitsave", (source, args) => {
+    saveOutfit(args[0]);
 });
 
 RegisterCommand("clothing", () => {
