@@ -84,6 +84,45 @@ async function setPedOutfit(ped, outfit) {
             );
         }
     }
+    SetPedHeadBlendData(
+        ped,
+        outfit.headBlend.shapeFirstID,
+        outfit.headBlend.shapeSecondID,
+        outfit.headBlend.shapeThirdID,
+        outfit.headBlend.skinFirstID,
+        outfit.headBlend.skinSecondID,
+        outfit.headBlend.skinThirdID,
+        outfit.headBlend.shapeMix,
+        outfit.headBlend.skinMix,
+        outfit.headBlend.thirdMix,
+        false
+    );
+    for (let faceFeature = 0; faceFeature < 20; faceFeature++) {
+        SetPedFaceFeature(ped, faceFeature, outfit.face[faceFeature]);
+    }
+    SetPedHairColor(
+        ped,
+        outfit.hairColor[0],
+        outfit.hairColor[1]
+    );
+    for (let overlayID = 0; overlayID < 13; overlayID++) {
+        let thisHeadOverlay = outfit.headOverlay[overlayID];
+        SetPedHeadOverlay(
+            ped,
+            overlayID,
+            thisHeadOverlay[0],
+            thisHeadOverlay[1]
+        );
+        if (thisHeadOverlay[2] !== undefined) {
+            SetPedHeadOverlayColor(
+                ped,
+                overlayID,
+                [1, 2, 10].includes(overlayID) ? 1 : 2,
+                thisHeadOverlay[2],
+                thisHeadOverlay[3]
+            );
+        }
+    }
 }
 
 let characters;
@@ -181,7 +220,8 @@ on('__cfx_nui:newCharacter', async (data, cb) => {
 function loadVariationsNumbers(ped) {
     let variations = {
         ped: [],
-        pedProp: []
+        pedProp: [],
+        headOverlay: [],
     };
     for (let component = 0; component < 12; component++) {
         let numberOfVariations = GetNumberOfPedDrawableVariations(ped, component);
@@ -200,6 +240,9 @@ function loadVariationsNumbers(ped) {
             textures.push(GetNumberOfPedPropTextureVariations(ped, prop, variation));
         }
         variations.pedProp.push(textures);
+    }
+    for (let overlay = 0; overlay < 13; overlay++) {
+        variations.headOverlay.push(GetPedHeadOverlayNum(overlay));
     }
     return variations;
 }
@@ -405,4 +448,45 @@ on('__cfx_nui:cancelClothing', async (data, cb) => {
     emit("core:disableControlActions", "character_selector", { attack: false, look: false });
     await setPedOutfit(PlayerPedId(), characterAttributes.currentOutfit);
     inClothingMenu = false;
+});
+
+
+let camera;
+RegisterNuiCallbackType('camera')
+on('__cfx_nui:camera', async (data, cb) => {
+    cb();
+
+    if (!data.camera) {
+        if (!camera) return;
+        RenderScriptCams(
+            false,
+            false,
+            0,
+            true,
+            true
+        );
+        DestroyCam(camera, true);
+        camera = null;
+        return;
+    }
+
+    if (data.camera === "face") {
+        camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", ...GetEntityCoords(PlayerPedId()), 0, 0, 180, 50);
+
+        SetCamActive(camera, true);
+
+        RenderScriptCams(
+            true,
+            false,
+            0,
+            true, true
+        );
+
+        PointCamAtPedBone(camera, PlayerPedId(), 25260, 0, 0, 0);
+        AttachCamToPedBone(
+            camera, PlayerPedId(),
+            25260,
+            0, 0.5, 0, 180
+        );
+    }
 });

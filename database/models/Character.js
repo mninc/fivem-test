@@ -5,6 +5,20 @@ const outfit = {
     pedModel: String,
     ped: [[Number]],
     pedProp: [[Number]],
+    face: [Number],
+    headBlend: {
+        shapeFirstID: Number,
+        shapeSecondID: Number,
+        shapeThirdID: Number,
+        skinFirstID: Number,
+        skinSecondID: Number,
+        skinThirdID: Number,
+        shapeMix: Number,
+        skinMix: Number,
+        thirdMix: Number,
+    },
+    hairColor: [Number],
+    headOverlay: [[Number]],
 };
 module.exports = mongoose.model('Character', {
     steamid: String, // steamid of user who created the character
@@ -16,6 +30,6 @@ module.exports = mongoose.model('Character', {
     cash: Number,
     phoneNumber: Number,
     walk: String,
-    outfits: [ outfit ],
+    outfits: [outfit],
     currentOutfit: outfit,
 });
