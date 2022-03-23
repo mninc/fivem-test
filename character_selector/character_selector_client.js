@@ -155,7 +155,7 @@ let cid;
 function characterSelector() {
     cid = null;
     emit("core:cid", cid);
-    emit("core:disableControlActions", "character_selector", { attack: false, look: false });
+    emit("core:disableControlActions", "character_selector", { attack: false, look: false, escape: false });
     emitNet('database:getCharacters', GetPlayerServerId(PlayerId()));
     exports.spawnmanager.spawnPlayer({
         x: -2193.1298828125,
@@ -214,7 +214,7 @@ on('__cfx_nui:newCharacter', async (data, cb) => {
     SetGameplayCamRelativeHeading(180);
     SetPlayerControl(PlayerId(), true);
     FreezeEntityPosition(player, false);
-    emit("core:disableControlActions", "character_selector", { attack: true, look: true });
+    emit("core:disableControlActions", "character_selector", { attack: true, look: true, escape: true });
 });
 
 function loadVariationsNumbers(ped) {
@@ -420,11 +420,12 @@ RegisterCommand("outfitsave", (source, args) => {
 });
 
 RegisterCommand("clothing", () => {
+    if (IsPauseMenuActive()) return;
     SendNuiMessage(JSON.stringify({ action: "clothing", selectedVariations: characterAttributes.currentOutfit, variations: loadVariationsNumbers(PlayerPedId()) }));
     SetNuiFocus(
         true, true
     );
-    emit("core:disableControlActions", "character_selector", { attack: true, look: true });
+    emit("core:disableControlActions", "character_selector", { attack: true, look: true, escape: true });
     inClothingMenu = true;
 });
 
@@ -434,7 +435,7 @@ on('__cfx_nui:saveClothing', async (data, cb) => {
     SetNuiFocus(
         false, false
     );
-    emit("core:disableControlActions", "character_selector", { attack: false, look: false });
+    emit("core:disableControlActions", "character_selector", { attack: false, look: false, escape: false });
     emit("core:setAttributes", { currentOutfit: variations });
     inClothingMenu = false;
 });
@@ -445,7 +446,7 @@ on('__cfx_nui:cancelClothing', async (data, cb) => {
     SetNuiFocus(
         false, false
     );
-    emit("core:disableControlActions", "character_selector", { attack: false, look: false });
+    emit("core:disableControlActions", "character_selector", { attack: false, look: false, escape: false });
     await setPedOutfit(PlayerPedId(), characterAttributes.currentOutfit);
     inClothingMenu = false;
 });
@@ -471,7 +472,7 @@ on('__cfx_nui:camera', async (data, cb) => {
     }
 
     if (data.camera === "face") {
-        camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", ...GetEntityCoords(PlayerPedId()), 0, 0, 180, 50);
+        camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", ...GetEntityCoords(PlayerPedId()), 0, 0, 180, 30);
 
         SetCamActive(camera, true);
 
@@ -482,11 +483,52 @@ on('__cfx_nui:camera', async (data, cb) => {
             true, true
         );
 
-        PointCamAtPedBone(camera, PlayerPedId(), 25260, 0, 0, 0);
+        PointCamAtPedBone(camera, PlayerPedId(), 25260, -0.15, 0, 0);
         AttachCamToPedBone(
             camera, PlayerPedId(),
             25260,
-            0, 0.5, 0, 180
+            0.15, 0.5, 0, 180
         );
+    } else if (data.camera === "body") {
+        let heading = GetEntityHeading(PlayerPedId());
+        SetGameplayCamRelativeHeading(0);
+
+        camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", ...GetEntityCoords(PlayerPedId()), 0, 0, 0, 35);
+        SetCamActive(camera, true);
+        RenderScriptCams(
+            true,
+            false,
+            0,
+            true, true
+        );
+
+        // length of line relative to player heading
+        let x = -0.8;
+        let y = -3;
+        let length = Math.sqrt(x ** 2 + y ** 2);
+        // angle relative to entity heading
+        let original_angle = Math.atan2(y, x) - Math.PI / 2;
+        // angle relative to coordinate system
+        let new_angle = original_angle + heading * (Math.PI / 180);
+        let a = -(length * Math.sin(new_angle));
+        let b = length * Math.cos(new_angle);
+
+        AttachCamToEntity(
+            camera,
+            PlayerPedId(),
+            a,
+            b,
+            -0.1,
+            false
+        );
+        SetCamRot(camera, 0, 0, heading, 2);
+
+        let c = camera;
+        while (c === camera) {
+            // stop gameplay camera 'drift' - we want W and S to make the face towards or away from the camera
+            let currentPlayerHeading = GetEntityHeading(PlayerPedId())
+            SetGameplayCamRelativeHeading(heading - currentPlayerHeading);
+            await Delay(1);
+        }
     }
 });

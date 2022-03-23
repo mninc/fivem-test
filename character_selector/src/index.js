@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import { PedModel } from './peds';
 import { spawnLocations } from './spawn_locations';
 import ReactModal from 'react-modal';
@@ -8,7 +9,7 @@ import ReactModal from 'react-modal';
 const map = (value, x1, y1, x2, y2) => (value - x1) * (y2 - x2) / (y1 - x1) + x2;
 const components = ["Face", "Mask", "Hair", "Torso", "Leg", "Parachute/bag", "Shoes", "Accessories", "Undershirt", "Kevlar", "Badge", "Torso 2"];
 const props = ["Hat", "Glasses", "Earpiece", "Watch", "Bracelet"];
-const faceFeatures = ["Node Width", "Nose Peak Height", "Nose Peak Length", "Nose Bone Height", "Nose Peak Lowering", "Nose Bone Twist", "Eye High", "Eye Forward", "Cheekbone Height", "Cheekbone Width", "Cheeks Width", "Eyes Open", "Lip Thickness", "Jaw Bone Width", "Jaw Bone Length", "Chin Bone Lowering", "Chin Bone Length", "Chin Bone Width", "Chin Dimple", "Neck Thickness"];
+const faceFeatures = ["Nose Width", "Nose Peak Height", "Nose Peak Length", "Nose Bone Height", "Nose Peak Lowering", "Nose Bone Twist", "Eyebrow Height", "Eyebrow Depth", "Cheekbone Height", "Cheekbone Width", "Cheek Width", "Eye Squint", "Lips Thickness", "Jaw Bone Width", "Jaw Bone Length", "Chin Bone Height", "Chin Bone Length", "Chin Bone Width", "Chin Cleft", "Neck Thickness"];
 const headOverlay = ["Blemishes", "Facial Hair", "Eyebrows", "Ageing", "Makeup", "Blush", "Complexion", "Sun Damage", "Lipstick", "Moles/Freckles", "Chest Hair", "Body Blemishes", "Add Body Blemishes"];
 const headOverlayWithColors = [1, 2, 5, 8, 10];
 
@@ -32,6 +33,7 @@ class CharacterSelection extends React.Component {
                 pedProp: []
             },
             clothingPage: "clothing",
+            camera: null,
         };
         this.characterCreation = {
             name: ""
@@ -98,7 +100,7 @@ class CharacterSelection extends React.Component {
             for (let propIndex = 0; propIndex < variations.pedProp.length; propIndex++) {
                 selectedVariations.pedProp.push([-1, 0]);
             }
-            this.setState({ variations, selectedVariations });
+            this.setState({ variations, selectedVariations, camera: null });
             this.sendUpdatedVariations();
         });
     }
@@ -189,6 +191,14 @@ class CharacterSelection extends React.Component {
             method: 'POST',
             body: JSON.stringify({ camera })
         });
+        this.setState({ camera });
+        document.activeElement.blur();
+    }
+
+    escapePressed() {
+        if (this.state.mode === "clothing") {
+            this.setState({ mode: "clothing_quit" });
+        }
     }
 
     render() {
@@ -218,6 +228,19 @@ class CharacterSelection extends React.Component {
                     </ReactModal>
                 </div>
             );
+        } else if (this.state.mode === "clothing_quit") {
+            return (
+                <div className='quitClothing'>
+                    <div>
+                        <p>Are you sure you want to exit the clothing menu?</p>
+                        <div className='btn-group'>
+                            <button className='btn btn-lg btn-primary' onClick={() => this.saveClothing()}>Save</button>
+                            <button className='btn btn-lg btn-primary' onClick={() => this.cancelClothing()}>Cancel</button>
+                            <button className='btn btn-lg btn-primary' onClick={() => this.setState({ mode: "clothing" })}>Go Back</button>
+                        </div>
+                    </div>
+                </div>
+            )
         } else if (this.state.mode === "new_character" || this.state.mode === "clothing") {
             let pedCustomisation = [];
             if (this.state.clothingPage === "clothing") {
@@ -245,14 +268,15 @@ class CharacterSelection extends React.Component {
                     };
                     pedCustomisation.push(
                         <p>
-                            {components[componentIndex]}:
-                            {component.length} variations
-                            <input type="number" onChange={updateVariation} style={{ width: "100px" }} value={this.state.selectedVariations.ped[componentIndex][0]} min="0" max={component.length - 1} />
-                            {component[this.state.selectedVariations.ped[componentIndex][0]]} textures
-                            <input type="number" onChange={updateTexture} style={{ width: "100px" }} value={this.state.selectedVariations.ped[componentIndex][1]} min="0" max={component[this.state.selectedVariations.ped[componentIndex][0]] - 1} />
+                            <b>{components[componentIndex]}:</b>&nbsp;
+                            {component.length} variations&nbsp;
+                            <input type="number" onChange={updateVariation} value={this.state.selectedVariations.ped[componentIndex][0]} min="0" max={component.length - 1} />&nbsp;
+                            {component[this.state.selectedVariations.ped[componentIndex][0]]} textures&nbsp;
+                            <input type="number" onChange={updateTexture} value={this.state.selectedVariations.ped[componentIndex][1]} min="0" max={component[this.state.selectedVariations.ped[componentIndex][0]] - 1} />
                         </p>
                     )
                 }
+                pedCustomisation.push(<br />);
                 for (let propIndex = 0; propIndex < this.state.variations.pedProp.length; propIndex++) {
                     let prop = this.state.variations.pedProp[propIndex]; // list of variations, each is a number of textures
                     let updateVariation = e => {
@@ -269,20 +293,20 @@ class CharacterSelection extends React.Component {
                     };
                     pedCustomisation.push(
                         <p>
-                            {props[propIndex]}:
-                            {prop.length} variations
-                            <input type="number" onChange={updateVariation} style={{ width: "100px" }} value={this.state.selectedVariations.pedProp[propIndex][0]} min="-1" max={prop.length - 1} />
-                            {prop[this.state.selectedVariations.pedProp[propIndex][0]]} textures
-                            <input type="number" onChange={updateTexture} style={{ width: "100px" }} value={this.state.selectedVariations.pedProp[propIndex][1]} min="0" max={prop[this.state.selectedVariations.pedProp[propIndex][0]] - 1} />
+                            <b>{props[propIndex]}:</b>&nbsp;
+                            {prop.length} variations&nbsp;
+                            <input type="number" onChange={updateVariation} value={this.state.selectedVariations.pedProp[propIndex][0]} min="-1" max={prop.length - 1} />&nbsp;
+                            {prop[this.state.selectedVariations.pedProp[propIndex][0]]} textures&nbsp;
+                            <input type="number" onChange={updateTexture} value={this.state.selectedVariations.pedProp[propIndex][1]} min="0" max={prop[this.state.selectedVariations.pedProp[propIndex][0]] - 1} />
                         </p>
                     )
                 }
             }
             if (this.state.clothingPage === "head") {
                 pedCustomisation.push(
-                    <p style={{ backgroundColor: "white" }}>
-                        Face:
-                    </p>
+                    <h2>
+                        Parents:
+                    </h2>
                 );
                 let updateHeadBlend = key => {
                     return (e) => {
@@ -294,34 +318,34 @@ class CharacterSelection extends React.Component {
                 };
                 pedCustomisation.push(
                     <p>
-                        Shape first:
-                        <input type="number" onChange={updateHeadBlend("shapeFirstID")} style={{ width: "100px" }} value={this.state.selectedVariations.headBlend["shapeFirstID"]} min="0" max="45" />
-                        Shape second:
-                        <input type="number" onChange={updateHeadBlend("shapeSecondID")} style={{ width: "100px" }} value={this.state.selectedVariations.headBlend["shapeSecondID"]} min="0" max="45" />
-                        Shape third:
-                        <input type="number" onChange={updateHeadBlend("shapeThirdID")} style={{ width: "100px" }} value={this.state.selectedVariations.headBlend["shapeThirdID"]} min="0" max="45" />
+                        <b>Shape:</b> First:&nbsp;
+                        <input type="number" onChange={updateHeadBlend("shapeFirstID")} value={this.state.selectedVariations.headBlend["shapeFirstID"]} min="0" max="45" />&nbsp;
+                        Second:&nbsp;
+                        <input type="number" onChange={updateHeadBlend("shapeSecondID")} value={this.state.selectedVariations.headBlend["shapeSecondID"]} min="0" max="45" />&nbsp;
+                        Third:&nbsp;
+                        <input type="number" onChange={updateHeadBlend("shapeThirdID")} value={this.state.selectedVariations.headBlend["shapeThirdID"]} min="0" max="45" />
                     </p>,
                     <p>
-                        Skin first:
-                        <input type="number" onChange={updateHeadBlend("skinFirstID")} style={{ width: "100px" }} value={this.state.selectedVariations.headBlend["skinFirstID"]} min="0" max="45" />
-                        Skin second:
-                        <input type="number" onChange={updateHeadBlend("skinSecondID")} style={{ width: "100px" }} value={this.state.selectedVariations.headBlend["skinSecondID"]} min="0" max="45" />
-                        Skin third:
-                        <input type="number" onChange={updateHeadBlend("skinThirdID")} style={{ width: "100px" }} value={this.state.selectedVariations.headBlend["skinThirdID"]} min="0" max="45" />
+                        <b>Skin:</b> First:&nbsp;
+                        <input type="number" onChange={updateHeadBlend("skinFirstID")} value={this.state.selectedVariations.headBlend["skinFirstID"]} min="0" max="45" />&nbsp;
+                        Second:&nbsp;
+                        <input type="number" onChange={updateHeadBlend("skinSecondID")} value={this.state.selectedVariations.headBlend["skinSecondID"]} min="0" max="45" />&nbsp;
+                        Third:&nbsp;
+                        <input type="number" onChange={updateHeadBlend("skinThirdID")} value={this.state.selectedVariations.headBlend["skinThirdID"]} min="0" max="45" />
                     </p>,
                     <p >
-                        Shape mix:
-                        <input type="number" onChange={updateHeadBlend("shapeMix")} style={{ width: "100px" }} value={this.state.selectedVariations.headBlend["shapeMix"]} min="0" max="1" step="0.01" />
-                        Skin mix:
-                        <input type="number" onChange={updateHeadBlend("skinMix")} style={{ width: "100px" }} value={this.state.selectedVariations.headBlend["skinMix"]} min="0" max="1" step="0.01" />
-                        Thid mix:
-                        <input type="number" onChange={updateHeadBlend("thirdMix")} style={{ width: "100px" }} value={this.state.selectedVariations.headBlend["thirdMix"]} min="0" max="1" step="0.01" />
+                        Shape mix:&nbsp;
+                        <input type="number" onChange={updateHeadBlend("shapeMix")} value={this.state.selectedVariations.headBlend["shapeMix"]} min="0" max="1" step="0.01" />&nbsp;
+                        Skin mix:&nbsp;
+                        <input type="number" onChange={updateHeadBlend("skinMix")} value={this.state.selectedVariations.headBlend["skinMix"]} min="0" max="1" step="0.01" />&nbsp;
+                        Thid mix:&nbsp;
+                        <input type="number" onChange={updateHeadBlend("thirdMix")} value={this.state.selectedVariations.headBlend["thirdMix"]} min="0" max="1" step="0.01" />
                     </p>
                 );
                 pedCustomisation.push(
-                    <p style={{ backgroundColor: "white" }}>
+                    <h2>
                         Face features:
-                    </p>
+                    </h2>
                 );
                 for (let faceFeature = 0; faceFeature < 20; faceFeature++) {
                     let updatedFeature = e => {
@@ -332,8 +356,8 @@ class CharacterSelection extends React.Component {
                     };
                     pedCustomisation.push(
                         <p>
-                            {faceFeatures[faceFeature]}:
-                            <input type="number" onChange={updatedFeature} style={{ width: "100px" }} value={this.state.selectedVariations.face[faceFeature]} min="-1" max="1" step="0.1" />
+                            {faceFeatures[faceFeature]}:&nbsp;
+                            <input type="number" onChange={updatedFeature} value={this.state.selectedVariations.face[faceFeature]} min="-1" max="1" step="0.1" />
                         </p>
                     );
                 }
@@ -350,8 +374,8 @@ class CharacterSelection extends React.Component {
                 pedCustomisation.push(
                     <p>
                         Hair Color:
-                        <input type="number" onChange={updateHairColor(0)} style={{ width: "100px" }} value={this.state.selectedVariations.hairColor[0]} min="0" max="63" />
-                        <input type="number" onChange={updateHairColor(1)} style={{ width: "100px" }} value={this.state.selectedVariations.hairColor[1]} min="0" max="63" />
+                        <input type="number" onChange={updateHairColor(0)} value={this.state.selectedVariations.hairColor[0]} min="0" max="63" />
+                        <input type="number" onChange={updateHairColor(1)} value={this.state.selectedVariations.hairColor[1]} min="0" max="63" />
                     </p>
                 );
                 for (let overlayID = 0; overlayID < this.state.variations.headOverlay.length; overlayID++) {
@@ -359,12 +383,12 @@ class CharacterSelection extends React.Component {
                     let overlayHasColor = headOverlayWithColors.includes(overlayID);
                     let updateVariation = e => {
                         let newValue = parseInt(e.target.value);
-                        this.state.selectedVariations.headOverlay[overlayID] = overlayHasColor ? [newValue, 255, 0, 0] : [newValue, 255];
+                        this.state.selectedVariations.headOverlay[overlayID] = overlayHasColor ? [newValue, 1, 0, 0] : [newValue, 1];
                         this.setState({ selectedVariations: this.state.selectedVariations });
                         this.sendUpdatedVariations();
                     };
                     let updateOpacity = e => {
-                        let newValue = parseInt(e.target.value);
+                        let newValue = parseFloat(e.target.value);
                         this.state.selectedVariations.headOverlay[overlayID][1] = newValue;
                         this.setState({ selectedVariations: this.state.selectedVariations });
                         this.sendUpdatedVariations();
@@ -383,16 +407,16 @@ class CharacterSelection extends React.Component {
                     };
                     pedCustomisation.push(
                         <p>
-                            {headOverlay[overlayID]}:
-                            {overlayIndexNumber} variations
-                            <input type="number" onChange={updateVariation} style={{ width: "100px" }} value={this.state.selectedVariations.headOverlay[overlayID][0]} min="-1" max={overlayIndexNumber - 1} />
-                            Opacity:
-                            <input type="number" onChange={updateOpacity} style={{ width: "100px" }} value={this.state.selectedVariations.headOverlay[overlayID][1]} min="0" max="255" />
+                            <b>{headOverlay[overlayID]}:</b>&nbsp;
+                            {overlayIndexNumber} variations&nbsp;
+                            <input type="number" onChange={updateVariation} value={this.state.selectedVariations.headOverlay[overlayID][0]} min="-1" max={overlayIndexNumber - 1} />&nbsp;
+                            Opacity:&nbsp;
+                            <input type="number" onChange={updateOpacity} value={this.state.selectedVariations.headOverlay[overlayID][1]} min="0" max="1" step="0.1" />&nbsp;
                             {overlayHasColor && <br />}
-                            {overlayHasColor && "Main Color:"}
-                            {overlayHasColor && <input type="number" onChange={updateColorOne} style={{ width: "100px" }} value={this.state.selectedVariations.headOverlay[overlayID][2]} min="0" max="63" />}
-                            {overlayHasColor && "Secondary Color:"}
-                            {overlayHasColor && <input type="number" onChange={updateColorTwo} style={{ width: "100px" }} value={this.state.selectedVariations.headOverlay[overlayID][3]} min="0" max="63" />}
+                            {overlayHasColor && "Main Color: "}
+                            {overlayHasColor && <input type="number" onChange={updateColorOne} value={this.state.selectedVariations.headOverlay[overlayID][2]} min="0" max="63" />}
+                            {overlayHasColor && " Secondary Color: "}
+                            {overlayHasColor && <input type="number" onChange={updateColorTwo} value={this.state.selectedVariations.headOverlay[overlayID][3]} min="0" max="63" />}
                         </p>
                     )
                 }
@@ -400,34 +424,34 @@ class CharacterSelection extends React.Component {
             let rightMenu = [];
             if (this.state.mode === "new_character") {
                 rightMenu.push(
-                    <p>Name: <input onChange={e => this.onNameChange(e)}></input></p>
-                );
-                rightMenu.push(
+                    <p>Name: <input onChange={e => this.onNameChange(e)}></input></p>,
                     <button onClick={() => this.finishCreation()}>Create Character</button>
-                );
-            } else if (this.state.mode === "clothing") {
-                rightMenu.push(
-                    <button onClick={() => this.saveClothing()}>Save</button>
-                );
-                rightMenu.push(
-                    <button onClick={() => this.cancelClothing()}>Cancel</button>
                 );
             }
             return (
                 <div id="char-creation">
                     <div id="ped-selection">
-                        <p>
-                            Camera:
-                            <button onClick={() => this.setCamera("face")}>Face</button>
-                            <button onClick={() => this.setCamera(null)}>Default</button>
-                        </p>
-                        <p>
-                            Page:
-                            <button onClick={() => this.setState({ clothingPage: "clothing" })}>Clothing</button>
-                            <button onClick={() => this.setState({ clothingPage: "head" })}>Head</button>
-                            <button onClick={() => this.setState({ clothingPage: "face" })}>Face</button>
-                        </p>
-                        {pedCustomisation}
+                        <div className='ped-selection-header'>
+                            <p>
+                                Camera:
+                                <div className='btn-group'>
+                                    <button className={'btn btn-primary btn-lg' + (this.state.camera === "face" ? ' active' : '')} onClick={() => this.setCamera("face")}>Face</button>
+                                    <button className={'btn btn-primary btn-lg' + (this.state.camera === "body" ? ' active' : '')} onClick={() => this.setCamera("body")}>Body</button>
+                                    <button className={'btn btn-primary btn-lg' + (this.state.camera ? '' : ' active')} onClick={() => this.setCamera(null)}>Default</button>
+                                </div>
+                            </p>
+                            <p>
+                                Page:
+                                <div className='btn-group'>
+                                    <button className={'btn btn-primary btn-lg' + (this.state.clothingPage === "clothing" ? ' active' : '')} onClick={() => this.setState({ clothingPage: "clothing" })}>Clothing</button>
+                                    <button className={'btn btn-primary btn-lg' + (this.state.clothingPage === "head" ? ' active' : '')} onClick={() => this.setState({ clothingPage: "head" })}>Head</button>
+                                    <button className={'btn btn-primary btn-lg' + (this.state.clothingPage === "face" ? ' active' : '')} onClick={() => this.setState({ clothingPage: "face" })}>Face</button>
+                                </div>
+                            </p>
+                        </div>
+                        <div className='ped-selection-body'>
+                            {pedCustomisation}
+                        </div>
                     </div>
                     <div id="char-attributes">
                         {rightMenu}
@@ -469,7 +493,6 @@ const selection = ReactDOM.render(
     document.getElementById('root')
 );
 
-console.log("listener set up");
 window.addEventListener('message', (event) => {
     let data = event.data;
     if (data.action === 'enable_screen' || data.action === "disable_screen") {
@@ -484,6 +507,11 @@ window.addEventListener('message', (event) => {
             variations: data.variations,
         });
         selection.setMode("clothing");
+    }
+});
+window.addEventListener("keydown", e => {
+    if (e.code === "Escape") {
+        selection.escapePressed();
     }
 });
 fetch(`https://${GetParentResourceName()}/ready`, {
