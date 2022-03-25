@@ -155,7 +155,8 @@ let cid;
 function characterSelector() {
     cid = null;
     emit("core:cid", cid);
-    emit("core:disableControlActions", "character_selector", { attack: false, look: false, escape: false });
+    emit("core:disableControlActions", "character_selector", { attack: true, move: true, look: true, escape: true });
+    SetFollowPedCamViewMode(1);
     emitNet('database:getCharacters', GetPlayerServerId(PlayerId()));
     exports.spawnmanager.spawnPlayer({
         x: -2193.1298828125,
@@ -165,7 +166,6 @@ function characterSelector() {
     }, async () => {
         const player = PlayerPedId();
         inSelection = true;
-        SetPlayerControl(PlayerId(), false);
         DisableIdleCamera(true);
         FreezeEntityPosition(player, true);
         SetEntityInvincible(player, true);
@@ -214,7 +214,7 @@ on('__cfx_nui:newCharacter', async (data, cb) => {
     SetGameplayCamRelativeHeading(180);
     SetPlayerControl(PlayerId(), true);
     FreezeEntityPosition(player, false);
-    emit("core:disableControlActions", "character_selector", { attack: true, look: true, escape: true });
+    emit("core:disableControlActions", "character_selector", { attack: true, look: true, escape: true, move: false });
 });
 
 function loadVariationsNumbers(ped) {
@@ -269,8 +269,8 @@ let inClothingMenu = false;
 RegisterNuiCallbackType('updatedVariations');
 on('__cfx_nui:updatedVariations', async (data, cb) => {
     if (!data.variations.ped) { // indicates it's a ped switch
-        await newCharacterPed(data.variations.pedModel, cb);
         variations = data.variations;
+        await newCharacterPed(data.variations.pedModel, cb);
         return;
     } else {
         cb();
@@ -295,6 +295,12 @@ on('__cfx_nui:finishNewCharacter', async (data, cb) => {
         name: data.name,
         outfit: variations
     });
+});
+
+RegisterNuiCallbackType('discardNew')
+on('__cfx_nui:discardNew', async (data, cb) => {
+    cb();
+    characterSelector();
 });
 
 onNet('character_selector:finishedCreatingCharacter', () => {
@@ -331,7 +337,7 @@ on('__cfx_nui:selectedCharacter', async (data, cb) => {
     await setPedOutfit(PlayerPedId(), character.currentOutfit);
 
     StartPlayerTeleport(player, data.location.x, data.location.y, data.location.z, 0, true, true, true);
-    SetPlayerControl(PlayerId(), true);
+    emit("core:disableControlActions", "character_selector", { attack: false, look: false, escape: false, move: false });
     FreezeEntityPosition(player, false);
     SetEntityInvincible(player, false);
     SetEntityCollision(player, true, true);
@@ -425,7 +431,7 @@ RegisterCommand("clothing", () => {
     SetNuiFocus(
         true, true
     );
-    emit("core:disableControlActions", "character_selector", { attack: true, look: true, escape: true });
+    emit("core:disableControlActions", "character_selector", { attack: true, look: true, escape: true, move: false });
     inClothingMenu = true;
 });
 
@@ -435,7 +441,7 @@ on('__cfx_nui:saveClothing', async (data, cb) => {
     SetNuiFocus(
         false, false
     );
-    emit("core:disableControlActions", "character_selector", { attack: false, look: false, escape: false });
+    emit("core:disableControlActions", "character_selector", { attack: false, look: false, escape: false, move: false });
     emit("core:setAttributes", { currentOutfit: variations });
     inClothingMenu = false;
 });
@@ -446,7 +452,7 @@ on('__cfx_nui:cancelClothing', async (data, cb) => {
     SetNuiFocus(
         false, false
     );
-    emit("core:disableControlActions", "character_selector", { attack: false, look: false, escape: false });
+    emit("core:disableControlActions", "character_selector", { attack: false, look: false, escape: false, move: false });
     await setPedOutfit(PlayerPedId(), characterAttributes.currentOutfit);
     inClothingMenu = false;
 });

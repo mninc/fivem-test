@@ -135,7 +135,7 @@ select {
     width: 20vw;
 }
 
-.modal {
+.delete-modal {
     position: absolute;
     inset: 40px;
     border: 1px solid rgb(204, 204, 204);

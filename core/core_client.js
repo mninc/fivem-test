@@ -65,24 +65,23 @@ onNet("core:characterFromDatabase", character => {
     emit("core:newAttributes", characterAttributes);
 });
 
+function DisableControlActions(...actions) {
+    for (let i = 0; i < actions.length; i++) {
+        DisableControlAction(0, actions[i], true);
+    }
+}
 setTick(() => {
     if (finalDisable.attack) {
-        DisableControlAction(0, 24, true);
-        DisableControlAction(0, 25, true);
-        DisableControlAction(0, 257, true);
+        DisableControlActions(24, 25, 257);
     }
     if (finalDisable.look) {
-        DisableControlAction(0, 1, true);
-        DisableControlAction(0, 2, true);
-        DisableControlAction(0, 4, true);
-        DisableControlAction(0, 6, true);
-        DisableControlAction(0, 270, true);
-        DisableControlAction(0, 271, true);
-        DisableControlAction(0, 272, true);
-        DisableControlAction(0, 273, true);
+        DisableControlActions(1, 2, 4, 6, 270, 271, 272, 273);
     }
     if (finalDisable.escape) {
-        DisableControlAction(0, 200, true);
+        DisableControlActions(200);
+    }
+    if (finalDisable.move) {
+        DisableControlActions(30, 31, 32, 33, 34, 35, 266, 267, 268, 269);
     }
 });
 
@@ -90,6 +89,7 @@ let finalDisable = {
     attack: false,
     look: false,
     escape: false,
+    move: false,
 }
 let disablePerResource = {};
 on("core:disableControlActions", (resource, disable) => {

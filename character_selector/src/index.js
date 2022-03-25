@@ -21,6 +21,7 @@ class CharacterSelection extends React.Component {
         this.state = {
             visible: false,
             mode: "selection",
+            previousMode: "",
             selectedCharacter: 0,
             showDeleteModal: false,
             variations: {
@@ -92,13 +93,20 @@ class CharacterSelection extends React.Component {
                     shapeMix: 0,
                     skinMix: 0,
                     thirdMix: 0
-                }
+                },
+                face: [],
+                hairColor: [0, 0],
+                headOverlay: [],
             };
             for (let componentIndex = 0; componentIndex < variations.ped.length; componentIndex++) {
                 selectedVariations.ped.push([0, 0]);
             }
             for (let propIndex = 0; propIndex < variations.pedProp.length; propIndex++) {
                 selectedVariations.pedProp.push([-1, 0]);
+            }
+            for (let overlayID = 0; overlayID < variations.headOverlay.length; overlayID++) {
+                let overlayHasColor = headOverlayWithColors.includes(overlayID);
+                selectedVariations.headOverlay.push(overlayHasColor ? [-1, 1, 0, 0] : [-1, 1]);
             }
             this.setState({ variations, selectedVariations, camera: null });
             this.sendUpdatedVariations();
@@ -172,18 +180,28 @@ class CharacterSelection extends React.Component {
     }
 
     saveClothing() {
-        fetch(`https://${GetParentResourceName()}/saveClothing`, {
-            method: 'POST'
-        });
-        this.setCamera(null);
-        this.setVisible(false);
+        if (this.state.previousMode === "clothing") {
+            fetch(`https://${GetParentResourceName()}/saveClothing`, {
+                method: 'POST'
+            });
+            this.setCamera(null);
+            this.setVisible(false);
+        } else {
+            this.finishCreation();
+        }
     }
     cancelClothing() {
-        fetch(`https://${GetParentResourceName()}/cancelClothing`, {
-            method: 'POST'
-        });
-        this.setCamera(null);
-        this.setVisible(false);
+        if (this.state.previousMode === "clothing") {
+            fetch(`https://${GetParentResourceName()}/cancelClothing`, {
+                method: 'POST'
+            });
+            this.setCamera(null);
+            this.setVisible(false);
+        } else {
+            fetch(`https://${GetParentResourceName()}/discardNew`, {
+                method: 'POST'
+            });
+        }
     }
 
     setCamera(camera) {
@@ -196,8 +214,8 @@ class CharacterSelection extends React.Component {
     }
 
     escapePressed() {
-        if (this.state.mode === "clothing") {
-            this.setState({ mode: "clothing_quit" });
+        if (this.state.mode === "clothing" || this.state.mode === "new_character") {
+            this.setState({ mode: "clothing_quit", previousMode: this.state.mode });
         }
     }
 
@@ -217,7 +235,7 @@ class CharacterSelection extends React.Component {
                     </div>
                     <ReactModal
                         isOpen={this.state.showDeleteModal}
-                        className="modal"
+                        className="delete-modal"
                         overlayClassName="overlay"
                     >
                         <h2>Are you sure you want to delete this character?</h2>
@@ -232,11 +250,11 @@ class CharacterSelection extends React.Component {
             return (
                 <div className='quitClothing'>
                     <div>
-                        <p>Are you sure you want to exit the clothing menu?</p>
+                        <p>Are you sure you want to exit the {this.state.previousMode === "clothing" ? "clothing" : "character creation"} menu?</p>
                         <div className='btn-group'>
-                            <button className='btn btn-lg btn-primary' onClick={() => this.saveClothing()}>Save</button>
-                            <button className='btn btn-lg btn-primary' onClick={() => this.cancelClothing()}>Cancel</button>
-                            <button className='btn btn-lg btn-primary' onClick={() => this.setState({ mode: "clothing" })}>Go Back</button>
+                            <button className='btn btn-lg btn-primary' onClick={() => this.saveClothing()}>{this.state.previousMode === "clothing" ? "Save" : "Create Character"}</button>
+                            <button className='btn btn-lg btn-primary' onClick={() => this.cancelClothing()}>{this.state.previousMode === "clothing" ? "Cancel" : "Discard Character"}</button>
+                            <button className='btn btn-lg btn-primary' onClick={() => this.setState({ mode: this.state.previousMode })}>Go Back</button>
                         </div>
                     </div>
                 </div>
@@ -425,7 +443,6 @@ class CharacterSelection extends React.Component {
             if (this.state.mode === "new_character") {
                 rightMenu.push(
                     <p>Name: <input onChange={e => this.onNameChange(e)}></input></p>,
-                    <button onClick={() => this.finishCreation()}>Create Character</button>
                 );
             }
             return (
