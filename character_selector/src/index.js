@@ -180,22 +180,22 @@ class CharacterSelection extends React.Component {
     }
 
     saveClothing() {
+        this.setCamera(null);
         if (this.state.previousMode === "clothing") {
             fetch(`https://${GetParentResourceName()}/saveClothing`, {
                 method: 'POST'
             });
-            this.setCamera(null);
             this.setVisible(false);
         } else {
             this.finishCreation();
         }
     }
     cancelClothing() {
+        this.setCamera(null);
         if (this.state.previousMode === "clothing") {
             fetch(`https://${GetParentResourceName()}/cancelClothing`, {
                 method: 'POST'
             });
-            this.setCamera(null);
             this.setVisible(false);
         } else {
             fetch(`https://${GetParentResourceName()}/discardNew`, {
