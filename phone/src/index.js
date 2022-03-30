@@ -292,7 +292,7 @@ class Phone extends React.Component {
                         messages.push(
                             <div className={`sms-message from-${from}`}>
                                 <p>{message.content}</p>
-                                <p>{message.at}</p>
+                                <p>{new Date(message.at).toLocaleString()}</p>
                             </div>
                         )
                     }
@@ -307,7 +307,7 @@ class Phone extends React.Component {
                             {messages}
                         </div>
                         <div classname="sms-thread-lower">
-                            <Input className="form-control" type="text" onEnter={val => this.sendSMS(other, val)} clearOnEnter="true" />
+                            <Input className="form-control form-control-lg" type="text" onEnter={val => this.sendSMS(other, val)} clearOnEnter="true" />
                         </div>
                     </div>
                 )
@@ -387,11 +387,11 @@ class Phone extends React.Component {
             modal = <div className="phone-modal">
                 <div className="phone-modal-content">
                     <h2>Add Contact</h2>
-                    <label>Name: <Input type="text" className="form-control" onChange={event => this.setState(prevState => ({ modal: { ...prevState.modal, contactName: event.target.value } }))} /></label>
-                    <label>Number: <Input type="number" className="form-control" onChange={event => this.setState(prevState => ({ modal: { ...prevState.modal, contactNumber: parseInt(event.target.value) } }))} /></label>
+                    <label>Name: <Input type="text" className="form-control form-control-lg" onChange={event => this.setState(prevState => ({ modal: { ...prevState.modal, contactName: event.target.value } }))} /></label>
+                    <label>Number: <Input type="number" className="form-control form-control-lg" onChange={event => this.setState(prevState => ({ modal: { ...prevState.modal, contactNumber: parseInt(event.target.value) } }))} /></label>
                     <div>
-                        <button className="btn btn-secondary" onClick={() => this.setState({ modal: null })}>Close</button>
-                        <button className="btn btn-primary" onClick={() => this.addContact()}>Add contact</button>
+                        <button className="btn btn-lg btn-secondary" onClick={() => this.setState({ modal: null })}>Close</button>
+                        <button className="btn btn-lg btn-primary" onClick={() => this.addContact()}>Add contact</button>
                     </div>
                 </div>
             </div>;

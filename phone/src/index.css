@@ -163,6 +163,10 @@ div.contacts div.contacts-upper {
     align-items: center;
 }
 
+.phone-modal-content label {
+    font-size: 20px;
+}
+
 .phone-modal-content input {
     width: 200px;
 }
@@ -228,6 +232,8 @@ div.contacts div.contacts-upper {
     width: calc(100% - 20px);
     padding: 10px;
     border-radius: 10px;
+    font-size: 20px;
+    font-weight: bold;
 }
 .sms-message.from-them {
     background-color: rgb(95, 95, 95);
