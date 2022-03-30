@@ -1,5 +1,6 @@
 on("bank:atm", () => {
     if (!playerAttributes) return;
+    ExecuteCommand("e atm");
     emitNet("database:loadAccounts", playerAttributes.cid, "bank:loadedAccounts");
 });
 
@@ -38,13 +39,11 @@ on('__cfx_nui:cashChange', (data, cb) => {
 });
 
 onNet("bank:finishedTransaction", data => {
-    console.log("old cash", playerAttributes.cash);
     if (data.transactionType === "deposit") {
         playerAttributes.cash -= data.amount;
     } else if (data.transactionType === "withdraw") {
         playerAttributes.cash += data.amount;
     }
-    console.log("new cash", playerAttributes.cash);
 
     emit("core:setAttributes", { cash: playerAttributes.cash });
 });
@@ -67,4 +66,5 @@ on('__cfx_nui:close', (data, cb) => {
     SetNuiFocus(
         false, false
     );
+    ExecuteCommand("e c");
 });

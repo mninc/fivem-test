@@ -3,14 +3,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 
-/*
-fetch(`https://${GetParentResourceName()}/selectedOption`, {
-            method: 'POST',
-            body: JSON.stringify({ option })
-        });
-        */
 class Bank extends React.Component {
     constructor(props) {
         super(props);
@@ -41,9 +36,6 @@ class Bank extends React.Component {
     }
 
     loadTransactions(id) {
-        this.setState({
-            transactions: []
-        });
         fetch(`https://${GetParentResourceName()}/loadTransactions`, {
             method: 'POST',
             body: JSON.stringify({ accountNumber: id })
@@ -60,9 +52,9 @@ class Bank extends React.Component {
                 <div className="account" id={account.id} onClick={() => this.loadTransactions(account.id)}>
                     <p>Account number: {account.id}</p>
                     <p>Account balance: ${account.balance}</p>
-                    <input type="number" value={this.state.withdrawAccount === account.id ? (this.state.withdrawAmount || 0) : 0} onChange={event => this.setState({withdrawAmount: parseInt(event.target.value), withdrawAccount: account.id})} />
-                    <button onClick={() => this.handleCashChange("withdraw")}>Withdraw</button>
-                    <button onClick={() => this.handleCashChange("deposit")}>Deposit</button>
+                    <input type="number" className='form-control form-control-lg' value={this.state.withdrawAccount === account.id ? (this.state.withdrawAmount || 0) : 0} onChange={event => this.setState({ withdrawAmount: parseInt(event.target.value), withdrawAccount: account.id })} />
+                    <button className='btn btn-large btn-primary' onClick={() => this.handleCashChange("withdraw")}>Withdraw</button>
+                    <button className='btn btn-large btn-primary' onClick={() => this.handleCashChange("deposit")}>Deposit</button>
                 </div>
             )
         }
@@ -71,9 +63,12 @@ class Bank extends React.Component {
             let transaction = this.state.transactions[i];
             transactions.push(
                 <div className="transaction" id={transaction._id}>
-                    <p>Amount: ${transaction.amount}</p>
+                    <p>Amount: <span style={{ color: transaction.direction === "incoming" ? "green" : "red" }}>${transaction.amount}</span></p>
                     <p>Type: {transaction.transactionType}</p>
-                    <p>At: {transaction.at}</p>
+                    <p>At: {new Date(transaction.at).toLocaleString()}</p>
+                    {transaction.description &&
+                        <p>Description: {transaction.description}</p>
+                    }
                 </div>
             )
         }
@@ -97,7 +92,6 @@ const bank = ReactDOM.render(
     document.getElementById('root')
 );
 
-console.log("listener set up");
 window.addEventListener('message', (event) => {
     let data = event.data;
     if (data.action === 'open_atm') {
@@ -105,7 +99,8 @@ window.addEventListener('message', (event) => {
             visible: true,
             accounts: data.accounts,
             withdrawAmount: 0,
-            withdrawAccount: 0
+            withdrawAccount: 0,
+            transactions: [],
         })
     } else if (data.action === "transactions") {
         bank.setState({
