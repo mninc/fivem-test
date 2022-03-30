@@ -68,7 +68,7 @@ class Peek extends React.Component {
             } else if (option === "inventory:shop-ammunation") {
                 buttons.push(
                     <p id={option} onClick={() => this.selectOption(option)}>
-                        <i class="fas fa-raygun"></i>
+                        <i class="fas fa-bomb"></i>
                         Purchase Weapons
                     </p>
                 )
