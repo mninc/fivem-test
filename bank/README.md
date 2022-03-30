@@ -7,4 +7,3 @@ https://user-images.githubusercontent.com/26234962/160868473-1346b4ac-f030-40ee-
 
 - Transfers between accounts.
 - Access ATM menu at a bank.
-- 
