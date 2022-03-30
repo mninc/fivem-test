@@ -32,7 +32,8 @@ mongoose.connect(`mongodb://127.0.0.1:27017/manic-fivem`, {
         try {
             await mongoose.connection.dropCollection("shops");
         } catch { }
-        database.models.Shop.insertMany(require("./shops.json"));
+        await database.models.Shop.insertMany(require("./shops.json"));
+        await database.models.Vehicle.updateMany({}, { $set: { netID: -1 } });
     }
 });
 
@@ -631,4 +632,83 @@ on("playerDropped", async () => {
     let source = global.source;
     let steamid = getSteamid(source);
     await database.models.Character.updateMany({ steamid }, { $set: { playerServerId: null } });
+});
+
+async function processTransaction(cid, data) {
+    let account = await database.models.BankAccount.findOne({ owner: cid, type: "personal" });
+    if (account.balance < data.amount) {
+        return false;
+    }
+    account.balance -= data.amount;
+    await account.save();
+    let transaction = new database.models.BankTransaction(data);
+    transaction.accountNumber = account.id;
+    transaction.at = new Date();
+    await transaction.save();
+    return true;
+}
+
+onNet("database:buy-vehicle", async (data) => {
+    if (processTransaction(data.cid, { amount: data.cost, direction: "outgoing", transactionType: "purchase", description: `Vehicle purchase: ${data.vehicle}` })) {
+        let vehicle = new database.models.Vehicle({
+            owner: data.cid,
+            garage: 1,
+            model: data.vehicle,
+            saleHistory: [
+                { at: new Date() }
+            ]
+        });
+        await vehicle.save();
+        emit("vehicle:bought-vehicle", { model: data.vehicle, id: vehicle._id.toString() });
+    } else {
+        // failed
+    }
+});
+
+on("database:bought-vehicle-plate", async data => {
+    let vehicle = await database.models.Vehicle.findOne({ _id: data.id });
+    vehicle.plate = data.plate;
+    vehicle.netID = data.netID;
+    await vehicle.save();
+});
+
+onNet("database:load-vehicles", async (cid, garageID) => {
+    let source = global.source;
+    let vehicles = await database.models.Vehicle.find({ owner: cid, garage: garageID });
+    emitNet("f1:loaded-vehicles", source, docToJSON(vehicles));
+});
+
+const garageLocations = [
+    [50.92, -893.19],
+    [106.03, -1063.0]
+];
+onNet("database:load-vehicles-phone", async (data, emitTo) => {
+    let source = global.source;
+    let vehicles = docToJSON(await database.models.Vehicle.find({ owner: data.cid }));
+    vehicles.forEach(vehicle => {
+        if (vehicle.netID === -1) {
+            vehicle.position = garageLocations[vehicle.garage - 1]; // load from garage id
+        } else {
+            vehicle.position = GetEntityCoords(vehicle.netID);
+        }
+    })
+    emitNet(emitTo, source, vehicles);
+});
+
+on("database:retrieved-vehicle", async (data) => {
+    let vehicle = await database.models.Vehicle.findOne({ _id: data.id });
+    vehicle.netID = data.netID;
+    await vehicle.save();
+});
+
+on("database:park-vehicle", async (cid, vehicleNetID, garageID) => {
+    let vehicle = await database.models.Vehicle.findOne({ owner: cid, netID: vehicleNetID });
+    if (!vehicle) {
+        // fail
+        return console.log("invalid vehicle to park");
+    }
+    emit("vehicle:park-vehicle-success", vehicleNetID);
+    vehicle.garage = garageID;
+    vehicle.netID = -1;
+    await vehicle.save();
 });

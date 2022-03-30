@@ -59,7 +59,8 @@ class Phone extends React.Component {
             task: {
                 steps: []
             },
-            notifications: []
+            notifications: [],
+            vehicles: [],
         };
         this.contactsLoaded = false;
     }
@@ -106,7 +107,15 @@ class Phone extends React.Component {
             } else {
                 this.loadSMSOverview();
             }
+        } else if (pages[0] === "vehicles") {
+            this.loadVehicles();
         }
+    }
+
+    loadVehicles() {
+        fetch(`https://${GetParentResourceName()}/loadVehicles`, {
+            method: 'POST'
+        });
     }
 
     loadContacts() {
@@ -201,6 +210,13 @@ class Phone extends React.Component {
         }, 3000);
     }
 
+    trackCoordinates(coords) {
+        fetch(`https://${GetParentResourceName()}/trackCoordinates`, {
+            method: 'POST',
+            body: JSON.stringify({ coords })
+        });
+    }
+
     getMidSection() {
         if (this.state.page[0] === "home") {
             return (
@@ -219,6 +235,9 @@ class Phone extends React.Component {
                     </TooltipHover>
                     <TooltipHover title="Task">
                         <div className="app" onClick={() => this.setPage(["task"])}><i class="fas fa-tasks"></i></div>
+                    </TooltipHover>
+                    <TooltipHover title="Vehicles">
+                        <div className="app" onClick={() => this.setPage(["vehicles"])}><i class="fas fa-car"></i></div>
                     </TooltipHover>
                 </div>
             )
@@ -342,6 +361,23 @@ class Phone extends React.Component {
                     <p>Cash: {this.state.characterAttributes.cash}</p>
                 </div>
             )
+        } else if (this.state.page[0] === "vehicles") {
+            let vehicles = [];
+            for (let i = 0; i < this.state.vehicles.length; i++) {
+                let vehicle = this.state.vehicles[i];
+                vehicles.push(
+                    <div className='vehicle'>
+                        <p>Model: {vehicle.model}</p>
+                        <p>Garage: {vehicle.garage}; {vehicle.netID === -1 ? "STORED" : "OUT"}</p>
+                        <p><button className='btn btn-large btn-primary' onClick={() => this.trackCoordinates(vehicle.position)}>Track Car</button></p>
+                    </div>
+                );
+            }
+            return (
+                <div className='mid-section vehicles'>
+                    {vehicles}
+                </div>
+            )
         }
     }
 
@@ -424,6 +460,8 @@ window.addEventListener('message', (event) => {
     } else if (data.action === "contacts") {
         phone.contactsLoaded = true;
         phone.setState({ contacts: data.contacts });
+    } else if (data.action === "vehicles") {
+        phone.setState({ vehicles: data.vehicles });
     } else if (data.action === "time") {
         phone.setState({ time: data.time });
     } else if (data.action === "smsOverview") {

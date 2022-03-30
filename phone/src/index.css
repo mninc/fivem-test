@@ -294,3 +294,12 @@ div.contacts div.contacts-upper {
     font-weight: bold;
     color: white;
 }
+
+.vehicle {
+    font-size: 20px;
+    margin: 10px;
+    width: calc(100% - 20px);
+    padding: 10px;
+    border-radius: 10px;
+    background-color: rgb(153, 153, 153);
+}

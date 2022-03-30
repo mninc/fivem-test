@@ -57,9 +57,17 @@ on('__cfx_nui:loadContacts', (data, cb) => {
     cb();
     emitNet("database:loadContacts", { phoneNumber: characterAttributes.phoneNumber }, "phone:contacts");
 });
-
 onNet("phone:contacts", contacts => {
     SendNuiMessage(JSON.stringify({ action: "contacts", contacts }));
+});
+
+RegisterNuiCallbackType('loadVehicles')
+on('__cfx_nui:loadVehicles', (data, cb) => {
+    cb();
+    emitNet("database:load-vehicles-phone", { cid: characterAttributes.cid }, "phone:vehicles");
+});
+onNet("phone:vehicles", vehicles => {
+    SendNuiMessage(JSON.stringify({ action: "vehicles", vehicles }));
 });
 
 on("core:newAttributes", newAttributes => {
@@ -142,4 +150,10 @@ on("phone:task", task => {
         currentTaskStep = newTaskStep;
         SendNuiMessage(JSON.stringify({ action: "notification", notification: { title: currentTaskStep } }));
     }
+});
+
+RegisterNuiCallbackType('trackCoordinates')
+on('__cfx_nui:trackCoordinates', (data, cb) => {
+    cb();
+    SetNewWaypoint(...data.coords);
 });

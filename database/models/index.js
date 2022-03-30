@@ -8,3 +8,4 @@ exports.Contact = require('./Contact');
 exports.TextMessage = require('./TextMessage');
 exports.Shop = require('./Shop');
 exports.Task = require('./Task');
+exports.Vehicle = require('./Vehicle');

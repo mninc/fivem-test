@@ -1,6 +1,8 @@
-on('onResourceStart', resource => {
-    if (resource !== "f1") return;
-    SetNuiFocusKeepInput(true);
+SetNuiFocusKeepInput(true);
+
+let characterAttributes = {};
+on("core:newAttributes", newAttributes => {
+    characterAttributes = newAttributes;
 });
 
 RegisterKeyMapping('f1', 'F1', 'keyboard', 'F1');
@@ -45,6 +47,38 @@ RegisterCommand('f1', async () => {
             }
         });
     }
+    let [inGarage, garageID, garageCoordinates] = await isEntityInGarage(PlayerPedId());
+    if (inGarage) {
+        menuItems.push({
+            title: "Garage",
+            icon: "warehouse",
+            action: {
+                type: "open_garage",
+                garageID,
+                garageCoordinates,
+            }
+        });
+    }
+
+    let entities = getClosestEntities();
+    for (let i = 0; i < entities.length; i++) {
+        let entity = entities[i].entity;
+        if (GetEntityType(entity) === 2) {
+            let [inGarage, garageID] = await isEntityInGarage(entity);
+            if (inGarage) {
+                menuItems.push({
+                    title: "Park Vehicle",
+                    icon: "parking",
+                    action: {
+                        type: "park_vehicle",
+                        vehicle: entity,
+                        garageID,
+                    }
+                });
+            }
+        }
+    }
+
     emit("core:disableControlActions", "f1", { attack: true, look: true });
     SetCursorLocation(0.5, 0.5);
     SetNuiFocus(
@@ -53,6 +87,24 @@ RegisterCommand('f1', async () => {
     SendNuiMessage(JSON.stringify({ action: "show_f1", menuItems }));
 });
 
+let polyzoneCallbacks = {};
+function isEntityInGarage(entity) {
+    return new Promise(resolve => {
+        let id = Math.random();
+        polyzoneCallbacks[id] = resolve;
+        emit("pz-wrapper:isEntityInsideGarage", entity, id);
+    });
+}
+on("f1:polyzone", async (...args) => {
+    let id = args.shift();
+    let func = polyzoneCallbacks[id];
+    if (func) {
+        polyzoneCallbacks[id] = null;
+        func(args);
+    }
+});
+
+let action;
 RegisterNuiCallbackType('selectedItem')
 on('__cfx_nui:selectedItem', async (item, cb) => {
     cb();
@@ -60,7 +112,36 @@ on('__cfx_nui:selectedItem', async (item, cb) => {
         ExecuteCommand(`walk ${item.action.value}`);
     } else if (item.action.type === "vehicle") {
         emit("vehicle:openMenu");
+    } else if (item.action.type === "open_garage") {
+        action = item.action;
+        emitNet("database:load-vehicles", characterAttributes.cid, item.action.garageID);
+    } else if (item.action.type === "park_vehicle") {
+        emitNet("vehicle:park-vehicle", characterAttributes.cid, NetworkGetNetworkIdFromEntity(item.action.vehicle), item.action.garageID)
     }
+});
+
+onNet("f1:loaded-vehicles", vehicles => {
+    let menuItems = [
+        {
+            title: "Retrieve Vehicle"
+        }
+    ];
+    for (let i = 0; i < vehicles.length; i++) {
+        let vehicle = vehicles[i];
+        if (vehicle.netID === -1) {
+            menuItems.push({
+                title: vehicle.model,
+                description: `${vehicle.plate} - STORED`,
+                action: ["vehicle:retrieve-vehicle", vehicle, action.garageCoordinates]
+            })
+        } else {
+            menuItems.push({
+                title: vehicle.model,
+                description: `${vehicle.plate} - OUT`
+            })
+        }
+    }
+    emit("context-menu:open-menu", menuItems);
 });
 
 RegisterNuiCallbackType('close')
@@ -71,3 +152,29 @@ on('__cfx_nui:close', async (item, cb) => {
         false, false
     );
 });
+
+function getClosestEntities() {
+    const pC = GetEntityCoords(PlayerPedId(), false);
+    const closestEntities = [];
+    function processEntity(entity) {
+        const eC = GetEntityCoords(entity);
+        const distance = Math.hypot(pC[0] - eC[0], pC[1] - eC[1], pC[2] - eC[2]);
+        if (distance < 2) {
+            closestEntities.push({ entity });
+        }
+    }
+
+    function process(FindFirst, FindNext, EndFind) {
+        const first = FindFirst();
+        processEntity(first[1]);
+        let next = FindNext(first[0]);
+        while (next[0]) {
+            processEntity(next[1]);
+            next = FindNext(first[0]);
+        }
+        EndFind(first[0]);
+    }
+
+    process(FindFirstVehicle, FindNextVehicle, EndFindVehicle);
+    return closestEntities;
+}

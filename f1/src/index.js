@@ -4,10 +4,8 @@ import './index.css';
 import './RadialMenu.css';
 import { RadialMenu } from './RadialMenu.js';
 
-console.log("listener set up");
 const root = document.getElementById('root');
 window.addEventListener('message', (event) => {
-    console.log("on event", JSON.stringify(event.data));
     let data = event.data;
     if (data.action === 'show_f1' || data.action === "hide_f1") {
         root.innerHTML = "";
