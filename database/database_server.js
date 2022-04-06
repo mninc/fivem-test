@@ -596,7 +596,6 @@ on("database:loadActiveTasks", async (emitTo) => {
     let tasks = await loadTasksJSON({
         in_progress: true
     });
-    console.log(tasks);
     for (let i = 0; i < tasks.length; i++) {
         emit(
             emitTo,
@@ -607,7 +606,6 @@ on("database:loadActiveTasks", async (emitTo) => {
 
 on("database:updateTask", async (data, emitTo) => {
     await database.models.Task.updateOne({ _id: data.task }, { $set: data.update });
-    console.log(data.task);
     emit(
         emitTo,
         await loadTaskJSON({ _id: mongoose.Types.ObjectId(data.task) })

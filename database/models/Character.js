@@ -32,4 +32,5 @@ module.exports = mongoose.model('Character', {
     walk: String,
     outfits: [outfit],
     currentOutfit: outfit,
+    whitelists: [String], // eg police
 });

@@ -60,6 +60,8 @@ onNet("core:characterFromDatabase", character => {
         walk: character.walk,
         outfits: character.outfits,
         currentOutfit: character.currentOutfit,
+        whitelists: character.whitelists,
+        jobs: [],
     };
     loaded = true;
     emit("core:newAttributes", characterAttributes);

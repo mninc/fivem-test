@@ -25,6 +25,15 @@ export interface CharacterAttributes {
     ped: string;
     cash: number;
     phoneNumber: number;
+    whitelists: string[];
+    jobs: string[];
 }
 export type Coords = [number, number, number, number];
 export type Coords3 = [number, number, number];
+
+export interface ContextMenuItem {
+    title: string;
+    description?: string[];
+    action?: string[];
+    children?: ContextMenuItem[];
+}
