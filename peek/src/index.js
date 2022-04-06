@@ -86,6 +86,13 @@ class Peek extends React.Component {
                         Buy Vehicle
                     </p>
                 )
+            } else if (option === "police:sign-in-menu") {
+                buttons.push(
+                    <p id={option} onClick={() => this.selectOption(option)}>
+                        <i class="fas fa-business-time"></i>
+                        Sign on duty
+                    </p>
+                )
             }
 
         }

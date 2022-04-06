@@ -16,17 +16,12 @@ on("peek:registerPeekablePed", (entity, emitTo) => {
     peekablePeds[entity] = emitTo;
 });
 
-setTick(() => {
+setInterval(() => {
     if (peekOpen) {
-        if (updateIn === 0) {
-            updateIn = 20;
-            let data = { action: "peek", options: getOptions() };
-            SendNuiMessage(JSON.stringify(data));
-        } else {
-            updateIn--;
-        }
+        let data = { action: "peek", options: getOptions() };
+        SendNuiMessage(JSON.stringify(data));
     }
-});
+}, 20);
 
 RegisterKeyMapping('+peek', 'Peek', 'keyboard', 'LMENU');
 RegisterCommand('+peek', async () => {
@@ -65,7 +60,6 @@ function getOptions() {
             }
         } else if (type === 1) {
             if (peekablePeds[entity]) {
-                console.log(peekablePeds[entity]);
                 options.push(...peekablePeds[entity]);
             }
         }
@@ -79,7 +73,7 @@ function getClosestEntities() {
     function processEntity(entity) {
         const eC = GetEntityCoords(entity);
         const distance = Math.hypot(pC[0] - eC[0], pC[1] - eC[1], pC[2] - eC[2]);
-        if (distance < 2) {
+        if (distance < 3) {
             closestEntities.push({ entity });
         }
     }
@@ -100,11 +94,6 @@ function getClosestEntities() {
     return closestEntities;
 }
 
-RegisterCommand("entitytest", () => {
-    let e = getClosestEntities();
-    console.log(e, e.map(f => GetEntityModel(f.entity)));
-});
-
 RegisterNuiCallbackType('selectedOption')
 on('__cfx_nui:selectedOption', async (data, cb) => {
     cb();
@@ -115,7 +104,6 @@ on('__cfx_nui:selectedOption', async (data, cb) => {
     );
     if (data.option) {
         if (data.option === "atm") {
-            console.log("atm");
             emit("bank:atm"); // TODO: rework so the atm option is just called bank:atm
         } else if (data.option.includes(":")) {
             emit(data.option);

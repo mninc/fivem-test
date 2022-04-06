@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "allowJs": true,
+    "target": "es5",
+    "types": [
+      "@citizenfx/client",
+      "@types/node"
+    ],
+    "moduleResolution": "node",
+    "resolveJsonModule": true
+  },
+  "include": [
+    "./src/**/*"
+  ],
+  "references": [
+    {
+      "path": "../types"
+    }
+  ]
+}
